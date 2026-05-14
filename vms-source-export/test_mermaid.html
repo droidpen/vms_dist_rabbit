@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div class="mermaid" id="diagram">
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    import { RAG_ARCHITECTURE_MERMAID } from './src/lib/syncedArchitecture.ts'; 
+    
+    window.renderMermaid = async (code) => {
+        document.getElementById('diagram').innerHTML = code;
+        mermaid.initialize({ startOnLoad: false });
+        try {
+            await mermaid.run();
+            return false; 
+        } catch (e) {
+            document.body.innerHTML += `<div id="error-log">${e.message}</div>`;
+            return true; 
+        }
+    };
+  </script>
+</body>
+</html>

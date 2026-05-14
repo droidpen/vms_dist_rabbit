@@ -1,0 +1,9 @@
+﻿Plugin,Plugin Name,Severity,IP Address,Protocol,Port,Exploit?,MAC Address,DNS Name,NetBIOS Name,Plugin Output,Synopsis,Description,Steps to Remediate,CPE,CVE,First Discovered,Last Observed,Vuln Publication Date,Patch Publication Date,Plugin Publication Date,Plugin Modification Date
+298656,Vim < 9.1.2132 Buffer Overflow (GHSA-5w93-4g67-mm43),Medium,10.10.10.1,TCP,0,No,redacted,redacted,,"Plugin Output: 
+  Path              : /usr/bin/vim
+  Installed version : 8.0
+  Fixed version     : 9.1.2132",The remote host is missing a security update.,"The version of Vim installed on the remote host is prior to 9.1.2132. It is, therefore, affected by a vulnerability as referenced in the GHSA-5w93-4g67-mm43 advisory.
+
+  - Vim is an open source, command line text editor. Prior to version 9.1.2132, a heap buffer overflow     vulnerability exists in Vim's tag file resolution logic when processing the 'helpfile' option. The     vulnerability is located in the get_tagfname() function in src/tag.c. When processing help file tags,     Vim copies the user-controlled 'helpfile' option value into a fixed-size heap buffer of MAXPATHL + 1     bytes (typically 4097 bytes) using an unsafe STRCPY() operation without any bounds checking. This issue     has been patched in version 9.1.2132. (CVE-2026-25749)
+
+Note that Nessus has not tested for this issue but has instead relied only on the application's self-reported version number.",Upgrade to Vim version 9.1.2132 or later.,cpe:/a:vim:vim,CVE-2026-25749,"Mar 3, 2026 16:27:55 +08","Mar 3, 2026 16:27:55 +08","Feb 5, 2026 12:00:00 +08","Feb 5, 2026 12:00:00 +08","Feb 11, 2026 12:00:00 +08","Feb 18, 2026 12:00:00 +08"

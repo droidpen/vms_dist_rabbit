@@ -1,0 +1,95 @@
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🔍 Found ARCHITECTURE TYPE: 3-Tier Web Application
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📝 Mapped to system_type: 3-tier-web-application
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🔍 Found ARCHITECTURE TYPE: Three-tier Web Application
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📝 Mapped to system_type: 3-tier-web-application
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📊 Added system diagram: E-Government_Payment_Gateway_System_Diagram.svg
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🚀 AUTO RUN DEMO STARTED
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 📦 Project Name: E-Government Payment Gateway
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🏗️  System Type: 3-tier-web-application
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 📄 Files received: {presentation: 1, email: 1, evidence: 4}
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🔖 Generated RA ID: RA-2026-9657
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 📝 Creating project record...
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   Project name: E-Government Payment Gateway
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   System type: 3-tier-web-application
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Project record created/updated: [{…}]
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 ✅ State updated - Project: E-Government Payment Gateway RA ID: RA-2026-9657
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 📋 Upload boxes populated with files
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 ☁️ Starting Supabase uploads...
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📤 Uploading: 3Tier_Web_App_RA_Presentation.txt to ra-presentation
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🏢 ProjectContext loading project: E-Government Payment Gateway (trigger: 3 )
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🔬 Running architecture synthesis on 6 files
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📊 Architecture analysis complete: 3-Tier Web Application Architecture (On-premise, Containerized, API Gateway)
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ℹ️  Project name already set to: E-Government Payment Gateway (not overwriting)
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Constant previews:
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_3_TIER: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_MICROSERVICES: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_AI_ML: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 700">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_SERVERLESS: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Getting diagram for: 3-tier web application architecture (on-premise, containerized, api gateway)
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] ✓ Matched AI/ML
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Selected diagram title: AI/ML System Architecture (Hybrid Microservices + ML)
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Selected diagram length: 6539
+injection-topics.js:1 Browsing Topics API removed from about:srcdoc which is iframe
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📊 Project data loaded: Found in DB
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Storage upload successful
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Database record created
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📤 Uploading: 3Tier_Web_App_Vendor_Correspondence.txt to correspondence
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Storage upload successful
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Database record created
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📤 Uploading: 3Tier_Web_App_Architecture_Diagram.txt to supporting-evidence
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Storage upload successful
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Database record created
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📤 Uploading: 3Tier_Web_App_Security_Assessment.txt to supporting-evidence
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Storage upload successful
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Database record created
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📤 Uploading: 3Tier_Web_App_System_Diagram.txt to supporting-evidence
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Storage upload successful
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Database record created
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   📤 Uploading: E-Government_Payment_Gateway_System_Diagram.svg to supporting-evidence
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Storage upload successful
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   ✅ Database record created
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 
+📊 Upload Summary: 6 successful, 0 errors
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 🏁 AUTO RUN DEMO COMPLETE
+
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Constant previews:
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_3_TIER: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_MICROSERVICES: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_AI_ML: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 700">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65   DIAGRAM_SERVERLESS: 
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; f
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Getting diagram for: 3-tier web application architecture (on-premise, containerized, api gateway)
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] ✓ Matched AI/ML
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Selected diagram title: AI/ML System Architecture (Hybrid Microservices + ML)
+code_components_preview_iframe-3e4274daf8c868ac.min.js.br:65 [SystemArchitectureAnalysis] Selected diagram length: 6539

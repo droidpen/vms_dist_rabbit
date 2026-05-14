@@ -1,0 +1,94 @@
+═══════════════════════════════════════════════════════════════════════════
+RISK ACCEPTANCE SUBMISSION - PRESENTATION SUMMARY
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT: E-Government Payment Gateway
+SUBMISSION ID: RA-2026-0042
+DATE: April 10, 2026
+SUBMITTED BY: Officer 1 (Product Security)
+
+───────────────────────────────────────────────────────────────────────────
+EXECUTIVE SUMMARY
+───────────────────────────────────────────────────────────────────────────
+
+This risk acceptance request pertains to CVE-2024-3457 (MEDIUM severity)
+identified in the E-Government Payment Gateway during routine vulnerability
+assessment.
+
+BUSINESS JUSTIFICATION:
+The affected component is part of a legacy system migration scheduled for
+decommissioning within 90 days. A full remediation would require significant
+development effort that is not cost-effective given the short remaining
+lifespan of the system.
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS
+───────────────────────────────────────────────────────────────────────────
+
+CVE ID: CVE-2024-3457
+CVSS Score: 6.5 (MEDIUM)
+Vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+
+Description: Information disclosure vulnerability allowing authenticated
+users to access sensitive configuration data through improper access controls.
+
+───────────────────────────────────────────────────────────────────────────
+PROPOSED COMPENSATING CONTROLS
+───────────────────────────────────────────────────────────────────────────
+
+1. NETWORK ISOLATION
+   • Server hosted in internal network accessible only by CAM
+   • Access restricted to authorized users only
+   • Physical and logical network segmentation implemented
+
+2. USER RESTRICTION
+   • Application usage limited to Good Luck Infra personnel only
+   • No external or citizen-facing access
+   • Strict authentication and authorization in place
+
+3. MONITORING & DETECTION
+   • Firewall and IPS solution deployed within Good Luck Infra
+   • Network monitoring actively in place
+   • SIEM integration for detection of malicious activities
+   • Security incident response team on standby
+
+───────────────────────────────────────────────────────────────────────────
+RISK ASSESSMENT
+───────────────────────────────────────────────────────────────────────────
+
+LIKELIHOOD: LOW
+- Requires authenticated access
+- Internal network only
+- Limited user base
+- Active monitoring
+
+IMPACT: MEDIUM
+- Potential information disclosure
+- No data modification capability
+- No service disruption capability
+
+RESIDUAL RISK: LOW
+With compensating controls in place, residual risk is acceptable for the
+90-day acceptance period.
+
+───────────────────────────────────────────────────────────────────────────
+TIMELINE
+───────────────────────────────────────────────────────────────────────────
+
+Acceptance Period Requested: 90 days (April 10, 2026 - July 10, 2026)
+System Decommission Date: July 15, 2026
+Migration to New Platform: June 2026
+
+───────────────────────────────────────────────────────────────────────────
+APPROVAL REQUEST
+───────────────────────────────────────────────────────────────────────────
+
+We request approval for this risk acceptance based on:
+✓ Comprehensive compensating controls
+✓ Limited exposure window (90 days)
+✓ Business continuity requirements
+✓ Cost-benefit analysis favoring acceptance over remediation
+
+═══════════════════════════════════════════════════════════════════════════
+END OF PRESENTATION
+═══════════════════════════════════════════════════════════════════════════

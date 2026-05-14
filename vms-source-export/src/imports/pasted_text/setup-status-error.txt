@@ -1,0 +1,100 @@
+🔍 SetupStatus.checkSetup() running...
+   📊 Tables check: ✅ null
+   📦 Testing bucket accessibility with test uploads...
+  POST https://rcojgwrpyurkwbvlyxmi.supabase.co/storage/v1/object/correspondence/__setup_test__/1778102677773.txt 400 (Bad Request)
+(anonymous) @ @supabase_supabase-js.js:20133
+(anonymous) @ @supabase_supabase-js.js:20147
+await in (anonymous)
+(anonymous) @ @supabase_supabase-js.js:9816
+(anonymous) @ @supabase_supabase-js.js:9816
+(anonymous) @ @supabase_supabase-js.js:9888
+_handleRequest @ @supabase_supabase-js.js:9887
+post @ @supabase_supabase-js.js:9906
+(anonymous) @ @supabase_supabase-js.js:10119
+handleOperation @ @supabase_supabase-js.js:9988
+uploadOrUpdate @ @supabase_supabase-js.js:10095
+upload @ @supabase_supabase-js.js:10180
+(anonymous) @ SetupStatus.tsx:36
+(anonymous) @ SetupStatus.tsx:33
+await in (anonymous)
+y @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+ik @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+iz @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+i$ @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+dP @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dM @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dG @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dk @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+(anonymous) @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+SC @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+iC @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+dj @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+lR @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+lO @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+lv @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25Understand this error
+     correspondence: ❌ new row violates row-level security policy
+  POST https://rcojgwrpyurkwbvlyxmi.supabase.co/storage/v1/object/ra-presentation/__setup_test__/1778102677773.txt 400 (Bad Request)
+(anonymous) @ @supabase_supabase-js.js:20133
+(anonymous) @ @supabase_supabase-js.js:20147
+await in (anonymous)
+(anonymous) @ @supabase_supabase-js.js:9816
+(anonymous) @ @supabase_supabase-js.js:9816
+(anonymous) @ @supabase_supabase-js.js:9888
+_handleRequest @ @supabase_supabase-js.js:9887
+post @ @supabase_supabase-js.js:9906
+(anonymous) @ @supabase_supabase-js.js:10119
+handleOperation @ @supabase_supabase-js.js:9988
+uploadOrUpdate @ @supabase_supabase-js.js:10095
+upload @ @supabase_supabase-js.js:10180
+(anonymous) @ SetupStatus.tsx:36
+(anonymous) @ SetupStatus.tsx:33
+await in (anonymous)
+y @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+ik @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+iz @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+i$ @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+dP @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dM @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dG @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dk @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+(anonymous) @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+SC @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+iC @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+dj @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+lR @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+lO @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+lv @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25Understand this error
+     ra-presentation: ❌ new row violates row-level security policy
+  POST https://rcojgwrpyurkwbvlyxmi.supabase.co/storage/v1/object/supporting-evidence/__setup_test__/1778102677773.txt 400 (Bad Request)
+(anonymous) @ @supabase_supabase-js.js:20133
+(anonymous) @ @supabase_supabase-js.js:20147
+await in (anonymous)
+(anonymous) @ @supabase_supabase-js.js:9816
+(anonymous) @ @supabase_supabase-js.js:9816
+(anonymous) @ @supabase_supabase-js.js:9888
+_handleRequest @ @supabase_supabase-js.js:9887
+post @ @supabase_supabase-js.js:9906
+(anonymous) @ @supabase_supabase-js.js:10119
+handleOperation @ @supabase_supabase-js.js:9988
+uploadOrUpdate @ @supabase_supabase-js.js:10095
+upload @ @supabase_supabase-js.js:10180
+(anonymous) @ SetupStatus.tsx:36
+(anonymous) @ SetupStatus.tsx:33
+await in (anonymous)
+y @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+ik @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+iz @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+i$ @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+dP @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dM @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dG @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+dk @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+(anonymous) @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+SC @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+iC @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+dj @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:37
+lR @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+lO @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25
+lv @ code_components_preview_iframe-3e4274daf8c868ac.min.js.br:25Understand this error
+     supporting-evidence: ❌ new row violates row-level security policy
+   📦 All buckets accessible? ❌

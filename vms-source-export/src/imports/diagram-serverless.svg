@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #1e40af; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 14px; fill: #475569; }
+      .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1e293b; font-weight: 600; }
+      .text { font-family: Arial, sans-serif; font-size: 10px; fill: #475569; }
+      .zone-label { font-family: Arial, sans-serif; font-size: 12px; fill: #64748b; font-weight: 600; }
+      .cve-label { font-family: monospace; font-size: 10px; fill: #dc2626; font-weight: bold; }
+      .lambda { font-family: Arial, sans-serif; font-size: 11px; fill: #ea580c; font-weight: 600; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" class="title">Serverless Event-Driven Architecture</text>
+  <text x="450" y="50" text-anchor="middle" class="subtitle">Citizen Document Processing Platform (AWS Lambda)</text>
+
+  <!-- External Zone -->
+  <rect x="50" y="80" width="800" height="60" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" rx="8"/>
+  <text x="70" y="100" class="zone-label">EXTERNAL (Web Portal, Mobile App, Email System)</text>
+
+  <!-- API Gateway -->
+  <rect x="250" y="160" width="400" height="50" fill="#fef3c7" stroke="#d97706" stroke-width="2" rx="6"/>
+  <text x="450" y="180" text-anchor="middle" class="label">API GATEWAY (REST + WebSocket)</text>
+  <text x="450" y="195" text-anchor="middle" class="text">IAM + Cognito Auth • Rate Limiting • Request Validation</text>
+
+  <!-- AWS Cloud -->
+  <rect x="50" y="230" width="800" height="420" fill="#dbeafe" stroke="#3b82f6" stroke-width="3" rx="8"/>
+  <text x="70" y="250" class="zone-label">AWS SERVERLESS INFRASTRUCTURE</text>
+
+  <!-- S3 Bucket -->
+  <rect x="300" y="270" width="300" height="60" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="6"/>
+  <text x="450" y="290" text-anchor="middle" class="label">S3 BUCKET (Document Storage)</text>
+  <text x="450" y="305" text-anchor="middle" class="text">citizen-docs-upload • Versioning • Encryption</text>
+  <rect x="620" y="278" width="110" height="18" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5" rx="3"/>
+  <text x="675" y="291" text-anchor="middle" class="cve-label">CVE-2024-5634</text>
+
+  <!-- Lambda 1: Upload Handler -->
+  <rect x="80" y="360" width="220" height="70" fill="#fff7ed" stroke="#ea580c" stroke-width="2" rx="6"/>
+  <text x="190" y="380" text-anchor="middle" class="lambda">λ Document Upload Handler</text>
+  <text x="190" y="395" text-anchor="middle" class="text">Python 3.11</text>
+  <text x="190" y="408" text-anchor="middle" class="text">• File validation</text>
+  <text x="190" y="421" text-anchor="middle" class="text">• Malware scan (ClamAV)</text>
+
+  <!-- SQS Queue -->
+  <rect x="340" y="360" width="220" height="70" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="6"/>
+  <text x="450" y="380" text-anchor="middle" class="label">SQS QUEUE</text>
+  <text x="450" y="395" text-anchor="middle" class="text">Processing Queue</text>
+  <text x="450" y="408" text-anchor="middle" class="text">• Dead Letter Queue</text>
+  <text x="450" y="421" text-anchor="middle" class="text">• 5 min visibility timeout</text>
+
+  <!-- Lambda 2: OCR Processor -->
+  <rect x="600" y="360" width="220" height="70" fill="#fff7ed" stroke="#ea580c" stroke-width="2" rx="6"/>
+  <text x="710" y="380" text-anchor="middle" class="lambda">λ OCR Processor</text>
+  <text x="710" y="395" text-anchor="middle" class="text">Python 3.11 + Tesseract</text>
+  <text x="710" y="408" text-anchor="middle" class="text">• Text extraction</text>
+  <text x="710" y="421" text-anchor="middle" class="text">• Image OCR</text>
+
+  <!-- EventBridge -->
+  <rect x="300" y="460" width="300" height="50" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="6"/>
+  <text x="450" y="480" text-anchor="middle" class="label">EventBridge (Event Bus)</text>
+  <text x="450" y="495" text-anchor="middle" class="text">Event filtering • Multi-target routing</text>
+
+  <!-- Lambda 3 & 4 -->
+  <rect x="100" y="540" width="200" height="60" fill="#fff7ed" stroke="#ea580c" stroke-width="2" rx="6"/>
+  <text x="200" y="560" text-anchor="middle" class="lambda">λ Validation</text>
+  <text x="200" y="575" text-anchor="middle" class="text">Node.js 20</text>
+  <text x="200" y="588" text-anchor="middle" class="text">Business rules check</text>
+
+  <rect x="340" y="540" width="200" height="60" fill="#fff7ed" stroke="#ea580c" stroke-width="2" rx="6"/>
+  <text x="440" y="560" text-anchor="middle" class="lambda">λ Notification</text>
+  <text x="440" y="575" text-anchor="middle" class="text">Python 3.11</text>
+  <text x="440" y="588" text-anchor="middle" class="text">Email (SES) • SMS (SNS)</text>
+
+  <rect x="580" y="540" width="200" height="60" fill="#fff7ed" stroke="#ea580c" stroke-width="2" rx="6"/>
+  <text x="680" y="560" text-anchor="middle" class="lambda">λ Archive</text>
+  <text x="680" y="575" text-anchor="middle" class="text">Python 3.11</text>
+  <text x="680" y="588" text-anchor="middle" class="text">S3 Glacier (90 days)</text>
+
+  <!-- DynamoDB -->
+  <rect x="300" y="610" width="300" height="30" fill="#f3e8ff" stroke="#9333ea" stroke-width="2" rx="4"/>
+  <text x="450" y="630" text-anchor="middle" class="text">DynamoDB (Metadata, Status, Extracted Text) • DynamoDB Streams</text>
+
+  <!-- Arrows -->
+  <line x1="450" y1="140" x2="450" y2="160" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="210" x2="450" y2="230" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- S3 to Lambda -->
+  <path d="M 450 330 Q 350 345 300 375" stroke="#16a34a" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)"/>
+  <text x="370" y="350" class="text" fill="#16a34a">S3 Event</text>
+
+  <!-- Lambda to SQS -->
+  <line x1="300" y1="395" x2="340" y2="395" stroke="#ea580c" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- SQS to Lambda -->
+  <line x1="560" y1="395" x2="600" y2="395" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Lambda to EventBridge -->
+  <path d="M 710 430 Q 580 445 450 460" stroke="#ea580c" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+  <!-- EventBridge to Lambdas -->
+  <line x1="350" y1="510" x2="200" y2="540" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="510" x2="440" y2="540" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="550" y1="510" x2="680" y2="540" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Validation to DynamoDB -->
+  <line x1="250" y1="600" x2="360" y2="610" stroke="#ea580c" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#64748b"/>
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <!-- Footer -->
+  <text x="450" y="675" text-anchor="middle" class="text">Attack Surface: S3 Bucket (CVE-2024-5634) • Compensating Controls: VPC Endpoints, IAM Roles, CloudTrail Logging, Input Validation</text>
+</svg>

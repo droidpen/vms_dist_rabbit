@@ -1,0 +1,137 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                    SUPABASE SETUP CHECKLIST                   ║
+║          Check off each item as you complete it               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 1: DATABASE SETUP (2 minutes)                            │
+└───────────────────────────────────────────────────────────────┘
+
+☐ 1. Open https://supabase.com/dashboard/project/rcojgwrpyurkwbvlyxmi
+☐ 2. Click "SQL Editor" in left sidebar
+☐ 3. Click "New query" button
+☐ 4. Open file: /workspaces/default/code/supabase-setup.sql
+☐ 5. Copy ALL contents (scroll to bottom to verify)
+☐ 6. Paste into Supabase SQL Editor
+☐ 7. Click "Run" button (bottom right)
+☐ 8. Verify success message: "Database schema created successfully!"
+
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 2: STORAGE BUCKETS (2 minutes)                           │
+└───────────────────────────────────────────────────────────────┘
+
+☐ 9. Click "Storage" in left sidebar
+☐ 10. Click "New bucket" button
+
+   BUCKET 1:
+   ☐ 11. Name: ra-presentation
+   ☐ 12. Toggle "Public bucket" ON
+   ☐ 13. Click "Create bucket"
+
+   BUCKET 2:
+   ☐ 14. Click "New bucket" again
+   ☐ 15. Name: correspondence
+   ☐ 16. Toggle "Public bucket" ON
+   ☐ 17. Click "Create bucket"
+
+   BUCKET 3:
+   ☐ 18. Click "New bucket" again
+   ☐ 19. Name: supporting-evidence
+   ☐ 20. Toggle "Public bucket" ON
+   ☐ 21. Click "Create bucket"
+
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 3: VERIFICATION (1 minute)                               │
+└───────────────────────────────────────────────────────────────┘
+
+☐ 22. In Supabase, click "Database" → "Tables"
+☐ 23. Verify you see: projects, risk_acceptances, uploaded_files
+☐ 24. Click "Storage"
+☐ 25. Verify you see: ra-presentation, correspondence, supporting-evidence
+
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 4: TEST THE APP (1 minute)                               │
+└───────────────────────────────────────────────────────────────┘
+
+☐ 26. Go to your Figma Make preview
+☐ 27. Hard refresh the browser (Ctrl+Shift+R or Cmd+Shift+R)
+☐ 28. Verify you see "E-Government Payment Gateway" at top
+☐ 29. Verify you see "View Artifacts" button in header
+☐ 30. Go to: /workspaces/default/code/demo-files/
+☐ 31. Drag "Test_for_Hackathon_desens.txt" to "RA Presentation" box
+☐ 32. Watch for green checkmark ✓ (means upload succeeded)
+☐ 33. Click "View Artifacts" button
+☐ 34. Verify you see the uploaded file with metadata
+
+┌───────────────────────────────────────────────────────────────┐
+│ OPTIONAL: TEST TEAM COLLABORATION                             │
+└───────────────────────────────────────────────────────────────┘
+
+☐ 35. Share Figma project with teammate
+☐ 36. Have them open the app
+☐ 37. Verify they see the file you uploaded
+☐ 38. Have them upload a file
+☐ 39. Refresh your browser
+☐ 40. Verify you see their uploaded file
+
+┌───────────────────────────────────────────────────────────────┐
+│ FINAL VERIFICATION - ALL FEATURES WORKING                     │
+└───────────────────────────────────────────────────────────────┘
+
+☐ Project context displays at top
+☐ Three upload zones visible
+☐ Files upload with green checkmark
+☐ "View Artifacts" opens modal
+☐ Artifacts browser shows uploaded files
+☐ Can filter by category (All, Presentation, Correspondence, Evidence)
+☐ Can download files
+☐ Can delete files (with confirmation)
+☐ "Start Evaluation" button works
+☐ Assessment results display correctly
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    🎉 DEMO READY! 🎉                          ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING                                                │
+└───────────────────────────────────────────────────────────────┘
+
+If something doesn't work:
+1. Check browser console (F12) for errors
+2. Verify bucket names are EXACT (no typos, no spaces)
+3. Verify buckets are set to Public
+4. Try hard refresh (Ctrl+Shift+R)
+5. Check SETUP_GUIDE.md for detailed troubleshooting
+
+┌───────────────────────────────────────────────────────────────┐
+│ QUICK REFERENCE                                                │
+└───────────────────────────────────────────────────────────────┘
+
+Supabase Dashboard:
+https://supabase.com/dashboard/project/rcojgwrpyurkwbvlyxmi
+
+Documentation Files:
+• SETUP_GUIDE.md - Complete guide with troubleshooting
+• QUICK_START.md - 3-step quick reference
+• IMPLEMENTATION_SUMMARY.md - What was built
+• SUPABASE_STORAGE_SETUP.md - Bucket setup details
+
+Demo Files Location:
+/workspaces/default/code/demo-files/
+
+Database Schema:
+/workspaces/default/code/supabase-setup.sql
+
+┌───────────────────────────────────────────────────────────────┐
+│ TIME BREAKDOWN                                                 │
+└───────────────────────────────────────────────────────────────┘
+
+Step 1 (Database): ~2 minutes
+Step 2 (Buckets): ~2 minutes
+Step 3 (Verify): ~1 minute
+Step 4 (Test): ~1 minute
+────────────────────────────────
+TOTAL: ~6 minutes
+
+Good luck with your demo! 🚀

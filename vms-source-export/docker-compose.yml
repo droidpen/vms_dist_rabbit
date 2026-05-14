@@ -1,0 +1,15 @@
+services:
+  vms:
+    build: .
+    ports:
+      - "5173:5173"
+      - "5174:5174"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    cap-add:
+      - SYS_ADMIN
+      - SYS_PTRACE
+    privileged: true

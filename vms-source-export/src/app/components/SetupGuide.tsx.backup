@@ -1,0 +1,2499 @@
+import { useState } from 'react';
+import { X, FileText, CheckSquare, Zap, Download, Layers } from 'lucide-react';
+
+type SetupGuideProps = {
+  onClose: () => void;
+  onAutoRunDemo?: (files: {
+    presentation: File[];
+    email: File[];
+    evidence: File[];
+  }, projectName: string) => void;
+};
+
+export function SetupGuide({ onClose, onAutoRunDemo }: SetupGuideProps) {
+  const [activeTab, setActiveTab] = useState<'quick' | 'checklist' | 'sql' | 'demos' | 'architecture'>('quick');
+
+  // Helper function to convert text content to File object
+  const createFileFromContent = (filename: string, content: string): File => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    return new File([blob], filename, { type: 'text/plain', lastModified: Date.now() });
+  };
+
+  // Auto-run demo for a specific architecture set
+  const handleAutoRunDemo = (fileSet: typeof demoFileSets[keyof typeof demoFileSets]) => {
+    if (!onAutoRunDemo) return;
+
+    const organizedFiles = {
+      presentation: [] as File[],
+      email: [] as File[],
+      evidence: [] as File[],
+    };
+
+    // Organize files by upload zone and extract project name
+    let projectName = 'Demo Project';
+    Object.entries(fileSet.files).forEach(([filename, content]) => {
+      const file = createFileFromContent(filename, content);
+
+      // Try to extract project name from first file
+      if (!projectName || projectName === 'Demo Project') {
+        const match = content.match(/PROJECT:\s*([^\n]+)/i);
+        if (match) {
+          projectName = match[1].trim();
+        }
+      }
+
+      if (filename.includes('Presentation') || filename.includes('RA_')) {
+        organizedFiles.presentation.push(file);
+      } else if (filename.includes('Email') || filename.includes('Correspondence') || filename.includes('Vendor') || filename.includes('Thread')) {
+        organizedFiles.email.push(file);
+      } else {
+        organizedFiles.evidence.push(file);
+      }
+    });
+
+    onAutoRunDemo(organizedFiles, projectName);
+  };
+
+  const sqlContent = `-- ============================================
+-- COMPLETE SUPABASE SETUP - COPY ALL OF THIS
+-- ============================================
+-- Risk Acceptance Review System - Database Schema
+-- Instructions: Copy this entire file, paste in SQL Editor, click Run
+
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Table: uploaded_files
+CREATE TABLE IF NOT EXISTS uploaded_files (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  file_name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_size INTEGER NOT NULL,
+  file_type TEXT NOT NULL,
+  storage_bucket TEXT NOT NULL CHECK (storage_bucket IN ('ra-presentation', 'correspondence', 'supporting-evidence')),
+  uploaded_by TEXT NOT NULL,
+  project_name TEXT NOT NULL,
+  ra_id TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb
+);
+
+-- Table: risk_acceptances
+CREATE TABLE IF NOT EXISTS risk_acceptances (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  ra_id TEXT NOT NULL UNIQUE,
+  project_name TEXT NOT NULL,
+  submitted_by TEXT NOT NULL,
+  submitted_date DATE NOT NULL,
+  expiry_date DATE NOT NULL,
+  vulnerabilities JSONB NOT NULL DEFAULT '[]'::jsonb,
+  proposed_controls TEXT[] NOT NULL DEFAULT '{}',
+  supporting_docs TEXT[] NOT NULL DEFAULT '{}',
+  recommendation TEXT CHECK (recommendation IN ('APPROVE', 'REJECT', 'REQUEST_INFO')),
+  assessment_notes TEXT[] DEFAULT '{}',
+  concerns TEXT[] DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'under_review', 'approved', 'rejected'))
+);
+
+-- Table: projects
+CREATE TABLE IF NOT EXISTS projects (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  project_name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  architecture_diagram_url TEXT,
+  system_type TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_uploaded_files_created_at ON uploaded_files(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_uploaded_files_bucket ON uploaded_files(storage_bucket);
+CREATE INDEX IF NOT EXISTS idx_uploaded_files_project ON uploaded_files(project_name);
+CREATE INDEX IF NOT EXISTS idx_uploaded_files_ra_id ON uploaded_files(ra_id);
+CREATE INDEX IF NOT EXISTS idx_risk_acceptances_created_at ON risk_acceptances(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_risk_acceptances_ra_id ON risk_acceptances(ra_id);
+CREATE INDEX IF NOT EXISTS idx_risk_acceptances_status ON risk_acceptances(status);
+CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(project_name);
+
+-- Disable Row Level Security on database tables (for demo)
+ALTER TABLE uploaded_files DISABLE ROW LEVEL SECURITY;
+ALTER TABLE risk_acceptances DISABLE ROW LEVEL SECURITY;
+ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
+
+-- Drop existing storage policies (safe if they don't exist)
+DROP POLICY IF EXISTS "Allow all uploads to ra-presentation" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all uploads to correspondence" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all uploads to supporting-evidence" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all reads from ra-presentation" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all reads from correspondence" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all reads from supporting-evidence" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all deletes from ra-presentation" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all deletes from correspondence" ON storage.objects;
+DROP POLICY IF EXISTS "Allow all deletes from supporting-evidence" ON storage.objects;
+
+-- Create storage policies for uploads
+CREATE POLICY "Allow all uploads to ra-presentation" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'ra-presentation');
+
+CREATE POLICY "Allow all uploads to correspondence" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'correspondence');
+
+CREATE POLICY "Allow all uploads to supporting-evidence" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'supporting-evidence');
+
+-- Create storage policies for reads
+CREATE POLICY "Allow all reads from ra-presentation" ON storage.objects
+FOR SELECT USING (bucket_id = 'ra-presentation');
+
+CREATE POLICY "Allow all reads from correspondence" ON storage.objects
+FOR SELECT USING (bucket_id = 'correspondence');
+
+CREATE POLICY "Allow all reads from supporting-evidence" ON storage.objects
+FOR SELECT USING (bucket_id = 'supporting-evidence');
+
+-- Create storage policies for deletes
+CREATE POLICY "Allow all deletes from ra-presentation" ON storage.objects
+FOR DELETE USING (bucket_id = 'ra-presentation');
+
+CREATE POLICY "Allow all deletes from correspondence" ON storage.objects
+FOR DELETE USING (bucket_id = 'correspondence');
+
+CREATE POLICY "Allow all deletes from supporting-evidence" ON storage.objects
+FOR DELETE USING (bucket_id = 'supporting-evidence');
+
+-- Insert sample project
+INSERT INTO projects (project_name, description, system_type) VALUES
+('E-Government Payment Gateway', '3-tier web application for citizen payment services', '3-tier-web-application')
+ON CONFLICT (project_name) DO NOTHING;
+
+-- Insert sample risk acceptance
+INSERT INTO risk_acceptances (
+  ra_id, project_name, submitted_by, submitted_date, expiry_date, vulnerabilities, proposed_controls, supporting_docs, recommendation, assessment_notes, concerns, status
+) VALUES (
+  'RA-2026-0042',
+  'E-Government Payment Gateway',
+  'Officer 1 (Product Security)',
+  '2026-04-10',
+  '2026-07-10',
+  '[{"cveId": "CVE-2024-3457", "severity": "MEDIUM"}]'::jsonb,
+  ARRAY['The server is hosted in the internal network which is only accessible by CAM and can only be accessed by authorized user.', 'The web application is not used by any other users except Good Luck Infra.', 'Firewall and IPS solution are implemented within the Good Luck Infra with network monitoring in place to aid in the detection of any potential malicious or unauthorized activities.'],
+  ARRAY['Test for Hackathon_desens.pptx', 'Test_VMS_report.xlsm', 'Vendor_pdf.pdf'],
+  'APPROVE',
+  ARRAY['Analyzed 3 supporting documents from submission.', 'Business case presentation (Test for Hackathon_desens.pptx) provides clear justification and timeline.', 'Proposed compensating controls are comprehensive and address key attack vectors.', 'Supporting evidence (Test_VMS_report.xlsm) validates finding severity.', 'Email correspondence (Vendor_pdf.pdf) shows alignment and constraints.'],
+  ARRAY[]::TEXT[],
+  'approved'
+)
+ON CONFLICT (ra_id) DO NOTHING;
+
+SELECT 'Database schema created successfully!' AS status;`;
+
+  const demoFileSets = {
+    '3tier': {
+      name: '3-Tier Web Application',
+      description: 'Traditional 3-tier architecture with internal network deployment',
+      files: {
+        'RA_Presentation_3Tier_Payment_Gateway.txt': `═══════════════════════════════════════════════════════════════════════════
+RISK ACCEPTANCE SUBMISSION - 3-TIER WEB APPLICATION
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT: E-Government Payment Gateway
+ARCHITECTURE TYPE: 3-Tier Web Application
+SUBMISSION ID: RA-2026-0042
+DATE: April 10, 2026
+
+───────────────────────────────────────────────────────────────────────────
+SYSTEM ARCHITECTURE OVERVIEW
+───────────────────────────────────────────────────────────────────────────
+
+The E-Government Payment Gateway follows a traditional 3-tier architecture:
+
+PRESENTATION LAYER:
+- Web Interface: React-based frontend application
+- User Interface: Citizen-facing payment forms
+- Access: Internal network only via CAM (Centralized Access Management)
+
+APPLICATION LAYER:
+- Payment Gateway API: RESTful API services
+- Business Logic: Transaction processing, validation, routing
+- Backend Server: Node.js application server
+- Authentication: Basic authentication with session management
+
+DATA LAYER:
+- Database Server: PostgreSQL 14.2
+- Data Storage: Transaction records, user profiles, audit logs
+- Location: Internal network, separate subnet
+
+INFRASTRUCTURE:
+- Deployment: On-premise internal network
+- Security Perimeter: Firewall and IPS solution
+- Network Monitoring: SIEM integration for threat detection
+- Load Balancing: Not currently implemented
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS
+───────────────────────────────────────────────────────────────────────────
+
+CVE ID: CVE-2024-3457
+CVSS Score: 6.5 (MEDIUM)
+Component: Payment Gateway API
+Impact: Information disclosure vulnerability
+
+───────────────────────────────────────────────────────────────────────────
+COMPENSATING CONTROLS
+───────────────────────────────────────────────────────────────────────────
+
+1. Network Segmentation: Internal network only, no public internet access
+2. Firewall Rules: IPS monitoring all traffic
+3. Access Control: Restricted to authorized CAM users only
+4. Monitoring: 24/7 SIEM monitoring and alerting
+
+ACCEPTANCE PERIOD: 90 days (decommissioning scheduled July 2026)
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Architecture_Diagram_Description.txt': `═══════════════════════════════════════════════════════════════════════════
+SYSTEM ARCHITECTURE DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE TYPE: Three-tier Web Application
+
+TIER 1 - PRESENTATION LAYER:
+├─ Technology Stack: React 18, HTML5, CSS3
+├─ Hosting: Internal web server (10.0.1.10)
+├─ Access Method: CAM authentication gateway
+└─ User Base: Good Luck Infra staff only (approximately 50 users)
+
+TIER 2 - APPLICATION LAYER:
+├─ Technology Stack: Node.js 18, Express.js
+├─ Services: Payment processing API, transaction validation
+├─ Backend Server: 10.0.1.20
+├─ API Gateway: RESTful endpoints at /api/v2/*
+└─ Session Management: Redis cache for session storage
+
+TIER 3 - DATA LAYER:
+├─ Database: PostgreSQL 14.2
+├─ Database Server: 10.0.1.30 (isolated subnet)
+├─ Data Store: Transaction records, audit logs, user profiles
+└─ Backup: Daily automated backups to secure storage
+
+NETWORK TOPOLOGY:
+External World → Firewall/IPS → CAM Gateway → Presentation Layer → Application Layer → Data Layer
+
+SECURITY INFRASTRUCTURE:
+- Firewall: Palo Alto Networks PA-3020
+- IPS: Intrusion Prevention System enabled
+- Monitoring: Splunk SIEM with real-time alerting
+- Network Segmentation: VLANs isolating each tier
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Vendor_Email_Correspondence.txt': `═══════════════════════════════════════════════════════════════════════════
+EMAIL CORRESPONDENCE - VENDOR PATCH TIMELINE
+═══════════════════════════════════════════════════════════════════════════
+
+From: security@goodluckinfra.gov.sg
+To: product-security@agency.gov.sg
+Date: April 8, 2026 09:15 SGT
+Subject: RE: CVE-2024-3457 - Patch Availability Timeline
+
+───────────────────────────────────────────────────────────────────────────
+
+Dear Product Security Team,
+
+Thank you for your inquiry regarding the security patch for CVE-2024-3457
+affecting the Payment Gateway API component.
+
+PATCH TIMELINE:
+Unfortunately, we must inform you that the official security patch will
+NOT be available until July 2026 (3 months from now). Here's why:
+
+1. The vulnerability affects a core authentication module that requires
+   significant refactoring across our entire product line
+2. We must maintain backward compatibility with existing deployments
+3. Comprehensive regression testing is required (estimated 6-8 weeks)
+4. Current development resources are allocated to Q2 compliance updates
+
+VENDOR RECOMMENDATION:
+Given this 90-day window, we strongly recommend considering a risk
+acceptance with compensating controls rather than waiting for the patch.
+
+The following compensating controls will effectively mitigate the risk:
+✓ Network-level isolation (internal network only)
+✓ IPS/Firewall rules blocking known exploit patterns
+✓ Enhanced monitoring and alerting via SIEM
+✓ Restricted user access (CAM authentication)
+
+THREAT INTELLIGENCE:
+Our security team has reviewed current threat intelligence:
+- No public exploits available for CVE-2024-3457
+- EPSS score: 0.234% (very low probability of exploitation)
+- Not listed in CISA KEV (Known Exploited Vulnerabilities)
+- Requires authenticated access (reduces attack surface)
+
+SUPPORT COMMITMENT:
+If you proceed with risk acceptance, we commit to:
+1. Immediate notification if threat landscape changes
+2. Emergency patch if active exploitation is detected
+3. Monthly security briefings on this vulnerability
+4. Priority support for any security concerns
+
+We understand this is not ideal, but the compensating controls approach
+is the safest option for your July decommissioning timeline.
+
+Best regards,
+
+Dr. Sarah Chen
+Chief Security Officer
+Good Luck Infrastructure Services
+security@goodluckinfra.gov.sg
++65 6XXX XXXX
+
+───────────────────────────────────────────────────────────────────────────
+
+From: product-security@agency.gov.sg
+To: security@goodluckinfra.gov.sg
+Date: April 8, 2026 14:30 SGT
+Subject: RE: CVE-2024-3457 - Patch Availability Timeline
+
+───────────────────────────────────────────────────────────────────────────
+
+Dr. Chen,
+
+Thank you for the detailed response. We acknowledge the 3-month patch
+timeline and agree that risk acceptance with compensating controls is
+the appropriate path forward given our system decommissioning date of
+July 15, 2026.
+
+We will proceed with formal risk acceptance documentation.
+
+Regards,
+Officer 1
+Product Security Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF CORRESPONDENCE
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Security_Assessment_Evidence.txt': `═══════════════════════════════════════════════════════════════════════════
+SECURITY ASSESSMENT - 3-TIER ARCHITECTURE VALIDATION
+═══════════════════════════════════════════════════════════════════════════
+
+DEPLOYMENT MODEL: Internal Network (On-Premise)
+NETWORK TYPE: Private internal network with firewall protection
+
+VERIFIED COMPONENTS:
+✓ Presentation Tier: Web interface (confirmed React frontend)
+✓ Application Tier: Payment API backend (confirmed Node.js)
+✓ Data Tier: PostgreSQL database server (confirmed v14.2)
+
+SECURITY CONTROLS IN PLACE:
+✓ Firewall rules restricting external access
+✓ IPS solution monitoring network traffic
+✓ SIEM integration for security event logging
+✓ Basic authentication enforced at application layer
+✓ Database connection encryption enabled
+
+ARCHITECTURE VALIDATION:
+This system implements a traditional three-tier architecture with clear
+separation between presentation, application, and data layers. Each tier
+is deployed on separate infrastructure with network segmentation.
+
+No AI or machine learning components detected.
+No microservices or containerized components detected.
+No serverless functions detected.
+═══════════════════════════════════════════════════════════════════════════`
+      }
+    },
+
+    'microservices': {
+      name: 'Microservices Architecture',
+      description: 'Cloud-native microservices with Kubernetes and API Gateway',
+      files: {
+        'RA_Presentation_Microservices_Platform.txt': `═══════════════════════════════════════════════════════════════════════════
+RISK ACCEPTANCE SUBMISSION - MICROSERVICES PLATFORM
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT: National Identity Verification Platform
+ARCHITECTURE TYPE: Microservices Architecture
+SUBMISSION ID: RA-2026-0089
+DATE: May 1, 2026
+
+───────────────────────────────────────────────────────────────────────────
+SYSTEM ARCHITECTURE OVERVIEW
+───────────────────────────────────────────────────────────────────────────
+
+The National Identity Verification Platform is built on a modern
+microservices architecture deployed on Kubernetes (K8s).
+
+MICROSERVICES COMPONENTS:
+- Identity Service: User identity verification and validation
+- Document Service: ID document processing and OCR
+- Biometric Service: Facial recognition and fingerprint matching
+- Notification Service: Email and SMS notifications
+- Audit Service: Logging and compliance tracking
+- API Gateway: Kong API Gateway for request routing
+
+CONTAINERIZATION:
+- Container Platform: Kubernetes v1.27
+- Container Runtime: Docker 24.0
+- Orchestration: K8s with Helm charts
+- Service Mesh: Istio for inter-service communication
+
+INFRASTRUCTURE:
+- Cloud Provider: AWS (Amazon Web Services)
+- Deployment: Multi-AZ deployment across ap-southeast-1
+- Load Balancer: AWS Application Load Balancer
+- Database: Per-service databases (microservice pattern)
+  - Identity Service: PostgreSQL RDS
+  - Document Service: MongoDB Atlas
+  - Biometric Service: DynamoDB
+- Cache Layer: Redis ElastiCache for session management
+- Message Queue: Amazon SQS for async communication
+
+SECURITY:
+- API Gateway: Kong with rate limiting and authentication
+- Service-to-Service Auth: mTLS via Istio
+- Secrets Management: AWS Secrets Manager
+- Network Security: VPC with security groups
+- WAF: AWS WAF protecting API Gateway
+- Container Security: Image scanning with Trivy
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS
+───────────────────────────────────────────────────────────────────────────
+
+CVE ID: CVE-2024-8912
+CVSS Score: 7.2 (HIGH)
+Component: Kong API Gateway v2.8
+Impact: Authentication bypass in specific configurations
+
+───────────────────────────────────────────────────────────────────────────
+COMPENSATING CONTROLS
+───────────────────────────────────────────────────────────────────────────
+
+1. Service Mesh mTLS: All inter-service communication encrypted
+2. WAF Rules: AWS WAF blocking known exploit patterns
+3. Network Policies: Kubernetes network policies restricting traffic
+4. Monitoring: CloudWatch + Prometheus metrics + alerts
+5. Container Isolation: Kubernetes namespaces with RBAC
+
+ACCEPTANCE PERIOD: 60 days (upgrade window during off-peak season)
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Microservices_Architecture_Details.txt': `═══════════════════════════════════════════════════════════════════════════
+MICROSERVICES ARCHITECTURE DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE PATTERN: Microservices with Service-Oriented Design
+
+API GATEWAY:
+├─ Kong API Gateway v2.8
+├─ Request routing and load balancing
+├─ Rate limiting: 1000 req/min per service
+├─ Authentication: OAuth 2.0 + JWT tokens
+└─ Public endpoint: https://api.verify.gov.sg
+
+MICROSERVICES CATALOG:
+1. Identity Service (identity-svc)
+   - Language: Java Spring Boot
+   - Database: PostgreSQL RDS (per-service database)
+   - Replicas: 3 pods
+
+2. Document Service (document-svc)
+   - Language: Python FastAPI
+   - Database: MongoDB Atlas
+   - Replicas: 5 pods (high traffic)
+
+3. Biometric Service (biometric-svc)
+   - Language: Go
+   - Database: DynamoDB
+   - Replicas: 4 pods
+
+4. Notification Service (notification-svc)
+   - Language: Node.js
+   - Database: None (stateless)
+   - Replicas: 2 pods
+
+5. Audit Service (audit-svc)
+   - Language: Python
+   - Database: PostgreSQL RDS
+   - Replicas: 2 pods
+
+KUBERNETES INFRASTRUCTURE:
+├─ Cluster: EKS (Elastic Kubernetes Service)
+├─ Node Groups: 3 node groups across 3 availability zones
+├─ Container Registry: Amazon ECR
+├─ Ingress Controller: NGINX Ingress
+└─ Service Mesh: Istio v1.18
+
+EVENT-DRIVEN ARCHITECTURE:
+- Message Broker: Amazon SQS for async communication
+- Event Bus: Amazon EventBridge for event routing
+- Pattern: Event-driven microservices for loose coupling
+
+OBSERVABILITY:
+- Metrics: Prometheus + Grafana
+- Logging: ELK Stack (Elasticsearch, Logstash, Kibana)
+- Tracing: Jaeger distributed tracing
+- APM: AWS X-Ray for performance monitoring
+
+DEPLOYMENT:
+- CI/CD: GitLab CI/CD with automated deployments
+- Blue-Green Deployments: Zero-downtime updates
+- Auto-scaling: Horizontal Pod Autoscaler (HPA)
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Kong_Vendor_Email_Thread.txt': `═══════════════════════════════════════════════════════════════════════════
+EMAIL THREAD - KONG API GATEWAY VULNERABILITY
+═══════════════════════════════════════════════════════════════════════════
+
+From: support@konghq.com
+To: platform-team@agency.gov.sg
+Date: April 28, 2026 16:45 SGT
+Subject: CVE-2024-8912 - Kong Gateway Security Advisory
+
+───────────────────────────────────────────────────────────────────────────
+
+Dear Platform Team,
+
+Kong has identified CVE-2024-8912 (CVSS 7.2 HIGH) affecting Kong Gateway
+v2.8.x series. This authentication bypass vulnerability requires immediate
+attention.
+
+PATCH TIMELINE:
+- Kong Gateway v3.4.1 with full patch: August 1, 2026 (60 days)
+- Emergency hotfix for v2.8: Not planned (end-of-support version)
+- Migration tools for v2.8 → v3.4: July 15, 2026
+
+MIGRATION COMPLEXITY:
+Upgrading from Kong 2.8 to 3.4 requires:
+1. Kubernetes manifest updates (breaking changes in CRDs)
+2. Plugin compatibility verification (5 custom plugins affected)
+3. Load testing with full production traffic patterns
+4. Blue-green deployment strategy (zero-downtime requirement)
+5. Estimated effort: 4-6 weeks engineering time
+
+RECOMMENDED MITIGATION:
+Given your off-peak season timing, we recommend risk acceptance with
+these compensating controls until August upgrade:
+
+1. AWS WAF rules (we can provide rule templates)
+2. Istio service mesh mTLS (already deployed per your config)
+3. Kubernetes network policies restricting API Gateway egress
+4. Enhanced CloudWatch alerting for suspicious auth patterns
+5. Rate limiting at ALB level (before Kong)
+
+EXPLOIT REQUIREMENTS:
+- Attacker needs network access to API Gateway public endpoint
+- Specific HTTP header manipulation required
+- WAF rules block 95% of known exploit variations
+- No known public exploits targeting Kubernetes deployments
+
+Kong Security Team will provide weekly threat intelligence updates
+during your acceptance period.
+
+Best regards,
+
+Marcus Wong
+Senior Security Engineer, Kong Inc.
+support@konghq.com
+
+───────────────────────────────────────────────────────────────────────────
+
+From: platform-team@agency.gov.sg
+To: support@konghq.com, ciso@agency.gov.sg
+Date: April 29, 2026 10:20 SGT
+Subject: RE: CVE-2024-8912 - Risk Acceptance Decision
+
+───────────────────────────────────────────────────────────────────────────
+
+Marcus / CISO Team,
+
+After reviewing the 60-day patch timeline and our Q2 off-peak season
+window, we've decided to proceed with risk acceptance for CVE-2024-8912.
+
+BUSINESS JUSTIFICATION:
+1. August upgrade aligns with our scheduled maintenance window
+2. Off-peak season (May-July) has 70% reduced traffic
+3. Istio mTLS + AWS WAF provide defense-in-depth
+4. Zero-downtime requirement prevents emergency patching
+
+We will implement all recommended compensating controls and schedule
+the Kong 3.4.1 upgrade for early August.
+
+Platform Engineering Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF EMAIL THREAD
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Cloud_Security_Assessment.txt': `═══════════════════════════════════════════════════════════════════════════
+SECURITY ASSESSMENT - MICROSERVICES PLATFORM
+═══════════════════════════════════════════════════════════════════════════
+
+DEPLOYMENT MODEL: Cloud (AWS)
+ARCHITECTURE: Containerized Microservices on Kubernetes
+
+VERIFIED COMPONENTS:
+✓ Microservices: 5 independent services identified
+✓ API Gateway: Kong v2.8 (vulnerable version)
+✓ Container Platform: Kubernetes EKS cluster
+✓ Service Mesh: Istio for secure service-to-service communication
+✓ Load Balancer: AWS ALB distributing traffic
+✓ Databases: Per-service databases (PostgreSQL, MongoDB, DynamoDB)
+✓ Cache: Redis ElastiCache
+✓ Message Queue: Amazon SQS for event-driven patterns
+
+SECURITY CONTROLS:
+✓ WAF protection via AWS WAF
+✓ mTLS between microservices via Istio
+✓ Network policies enforced in Kubernetes
+✓ Container image scanning enabled
+✓ Secrets encrypted in AWS Secrets Manager
+✓ VPC isolation with security groups
+
+ARCHITECTURE CLASSIFICATION:
+- Type: Microservices Architecture
+- Pattern: Service-oriented design with event-driven communication
+- Containerization: Docker containers on Kubernetes
+- Cloud-Native: Full AWS cloud deployment
+
+LATERAL MOVEMENT RISK:
+Due to microservices architecture, lateral movement between services
+is a concern if API Gateway is compromised. Istio mTLS provides
+defense-in-depth, but container escape vulnerabilities could allow
+privilege escalation within Kubernetes cluster.
+
+No AI/ML components detected in this architecture.
+═══════════════════════════════════════════════════════════════════════════`
+      }
+    },
+
+    'ai-ml': {
+      name: 'AI/ML System',
+      description: 'Machine learning platform with model inference and training pipelines',
+      files: {
+        'RA_Presentation_AI_Fraud_Detection.txt': `═══════════════════════════════════════════════════════════════════════════
+RISK ACCEPTANCE SUBMISSION - AI/ML FRAUD DETECTION PLATFORM
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT: Financial Transaction Fraud Detection System
+ARCHITECTURE TYPE: AI/ML Platform with Microservices
+SUBMISSION ID: RA-2026-0134
+DATE: May 6, 2026
+
+───────────────────────────────────────────────────────────────────────────
+SYSTEM ARCHITECTURE OVERVIEW
+───────────────────────────────────────────────────────────────────────────
+
+The Fraud Detection System combines traditional microservices architecture
+with advanced machine learning and AI components for real-time fraud detection.
+
+MACHINE LEARNING COMPONENTS:
+- ML Model Inference Service: Real-time fraud prediction API
+- Model Training Pipeline: Automated retraining on new fraud patterns
+- Feature Engineering Module: Data preprocessing and feature extraction
+- Model Registry: MLflow for model versioning and deployment
+- A/B Testing Framework: Champion/Challenger model comparison
+
+ML MODEL DETAILS:
+- Primary Model: XGBoost Gradient Boosting (fraud classification)
+- Neural Network: LSTM for transaction sequence analysis
+- Ensemble Model: Combining multiple ML models for improved accuracy
+- Framework: TensorFlow 2.13 and PyTorch 2.0
+- Inference Latency: <100ms for real-time decisions
+
+TRADITIONAL MICROSERVICES:
+- Transaction API: Receives payment transactions
+- Fraud Scoring Service: Calls ML inference endpoint
+- Alert Service: Triggers fraud alerts and blocks
+- Analytics Service: Fraud pattern analysis and reporting
+- API Gateway: Kong for request routing
+
+INFRASTRUCTURE:
+- Container Platform: Kubernetes on AWS EKS
+- ML Infrastructure: SageMaker for model training
+- Model Serving: TensorFlow Serving on Kubernetes
+- Feature Store: AWS Feature Store for ML features
+- Database: PostgreSQL for transactions, S3 for training data
+- Cache: Redis for feature caching
+- Message Queue: Kafka for streaming transactions
+
+AI/ML WORKFLOW:
+1. Transaction arrives via API Gateway
+2. Feature Engineering Module extracts features
+3. ML Inference Service predicts fraud probability
+4. Neural Network analyzes transaction sequence patterns
+5. Ensemble model combines predictions
+6. Fraud alert triggered if score > threshold
+
+DATA PIPELINE:
+- Streaming: Kafka for real-time transaction ingestion
+- Batch Processing: Apache Spark for training data preparation
+- Training Data: Historical transactions stored in S3
+- Model Training: Automated weekly retraining on SageMaker
+
+SECURITY:
+- API Gateway: Authentication and rate limiting
+- Model Security: Encrypted model artifacts
+- Data Privacy: PII anonymization in training data
+- Access Control: IAM roles for SageMaker access
+- Monitoring: CloudWatch + Prometheus for ML metrics
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS
+───────────────────────────────────────────────────────────────────────────
+
+CVE ID: CVE-2024-7821
+CVSS Score: 6.8 (MEDIUM)
+Component: TensorFlow Serving v2.12
+Impact: Model extraction via inference API abuse
+
+AI-SPECIFIC RISKS:
+- Model Inversion: Potential to reconstruct training data
+- Adversarial Examples: Crafted inputs to evade fraud detection
+- Model Poisoning: Risk if training data is compromised
+
+───────────────────────────────────────────────────────────────────────────
+COMPENSATING CONTROLS
+───────────────────────────────────────────────────────────────────────────
+
+1. Rate Limiting: Strict limits on inference API to prevent model extraction
+2. Input Validation: Anomaly detection on inference requests
+3. Model Watermarking: Embedded fingerprints in ML models
+4. Training Data Validation: Automated checks for data poisoning
+5. Adversarial Training: Models hardened against adversarial examples
+6. Model Access Logs: All inference calls logged and monitored
+7. A/B Testing: Monitoring for model drift and performance degradation
+
+ACCEPTANCE PERIOD: 45 days (TensorFlow upgrade during next sprint)
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'ML_Architecture_Documentation.txt': `═══════════════════════════════════════════════════════════════════════════
+AI/ML SYSTEM ARCHITECTURE DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE TYPE: Hybrid Microservices + Machine Learning Platform
+
+ML MODEL STACK:
+1. Fraud Detection Model (Primary)
+   - Algorithm: XGBoost Gradient Boosting
+   - Features: 147 engineered features
+   - Training Frequency: Weekly automated retraining
+   - Accuracy: 96.5% on validation set
+   - Framework: XGBoost 1.7.5
+
+2. Transaction Sequence Analyzer (Secondary)
+   - Algorithm: LSTM Neural Network
+   - Framework: TensorFlow 2.13
+   - Input: 30-day transaction history per user
+   - Architecture: 3-layer LSTM with attention mechanism
+   - Training: Bi-weekly on SageMaker
+
+3. Ensemble Model (Production)
+   - Combines XGBoost + LSTM predictions
+   - Voting mechanism: Weighted average
+   - Deployment: TensorFlow Serving on Kubernetes
+
+ML INFRASTRUCTURE:
+├─ Model Training: AWS SageMaker
+│  ├─ Instance Type: ml.p3.8xlarge (GPU for neural networks)
+│  ├─ Framework: TensorFlow + PyTorch containers
+│  └─ Orchestration: SageMaker Pipelines
+│
+├─ Model Serving: TensorFlow Serving
+│  ├─ Deployment: Kubernetes pods (5 replicas)
+│  ├─ Endpoint: /v1/models/fraud-detection:predict
+│  └─ Latency SLA: <100ms p95
+│
+├─ Feature Store: AWS Feature Store
+│  ├─ Online Features: Real-time inference features
+│  └─ Offline Features: Historical data for training
+│
+└─ Model Registry: MLflow
+   ├─ Model Versioning: Git-style version control
+   └─ Experiment Tracking: Hyperparameter logs
+
+DATA PIPELINE:
+- Streaming: Apache Kafka for real-time transactions
+- Batch Processing: Apache Spark on EMR for training data
+- Storage: S3 for model artifacts and training datasets
+- Preprocessing: Feature engineering microservice
+
+MICROSERVICES (Non-ML):
+1. Transaction API (transaction-api)
+2. Feature Engineering Service (feature-svc)
+3. ML Inference Service (ml-inference-svc)
+4. Alert Service (alert-svc)
+5. Analytics Service (analytics-svc)
+
+KUBERNETES DEPLOYMENT:
+- ML Pods: GPU-enabled nodes for inference
+- Standard Pods: CPU nodes for traditional services
+- Auto-scaling: Based on inference request volume
+
+AI/ML MONITORING:
+- Model Performance: MLflow metrics tracking
+- Inference Monitoring: Prediction distribution analysis
+- Data Drift Detection: Evidently AI for feature drift
+- Model Explainability: SHAP values for fraud decisions
+
+ADVERSARIAL DEFENSE:
+- Adversarial Training: Models trained on adversarial examples
+- Input Sanitization: Anomaly detection on inference inputs
+- Rate Limiting: Prevent model extraction attacks
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'TensorFlow_Vendor_Correspondence.txt': `═══════════════════════════════════════════════════════════════════════════
+EMAIL THREAD - TENSORFLOW SERVING VULNERABILITY
+═══════════════════════════════════════════════════════════════════════════
+
+From: tensorflow-security@google.com
+To: ml-platform@agency.gov.sg
+Date: May 2, 2026 08:30 PST
+Subject: Security Advisory: CVE-2024-7821 - TensorFlow Serving v2.12
+
+───────────────────────────────────────────────────────────────────────────
+
+Dear ML Platform Team,
+
+TensorFlow Security Team has identified CVE-2024-7821 (CVSS 6.8 MEDIUM)
+affecting TensorFlow Serving v2.12.x. This vulnerability allows potential
+model extraction via inference API abuse.
+
+PATCH AVAILABILITY:
+- TensorFlow Serving v2.15.1 with patch: June 20, 2026 (45 days)
+- Backport patch for v2.12: Not planned (legacy version)
+- Migration guide v2.12 → v2.15: Available now
+
+UPGRADE COMPLEXITY FOR ML SYSTEMS:
+This is not a simple version bump. TensorFlow Serving upgrades require:
+
+1. Model Re-Export (Critical):
+   - XGBoost models must be re-exported with TF 2.15 SavedModel format
+   - LSTM models require architecture compatibility verification
+   - Estimated effort: 1-2 weeks
+
+2. A/B Testing Requirement:
+   - Champion vs Challenger deployment for model comparison
+   - Minimum 2 weeks production traffic validation
+   - Statistical significance testing for prediction parity
+
+3. Infrastructure Updates:
+   - Kubernetes deployment manifests (GPU configurations changed)
+   - SageMaker pipeline integration updates
+   - Model Registry (MLflow) compatibility verification
+
+TOTAL TIMELINE: 4-5 weeks engineering + testing effort
+
+AI-SPECIFIC MITIGATIONS:
+Given the ML-specific nature of this vulnerability, we recommend:
+
+1. INFERENCE RATE LIMITING:
+   - Implement strict per-user query limits (1000/hour)
+   - Prevents model extraction via excessive querying
+   - Effectiveness: 90% risk reduction
+
+2. INPUT ANOMALY DETECTION:
+   - Deploy Evidently AI for request pattern monitoring
+   - Flag suspicious inference patterns (e.g., systematic feature probing)
+   - Real-time alerting for abnormal query sequences
+
+3. MODEL WATERMARKING:
+   - Embed cryptographic fingerprints in model weights
+   - Enables detection if model is exfiltrated
+   - Already supported in your MLflow registry
+
+4. ADVERSARIAL TRAINING:
+   - Continue your current adversarial training regimen
+   - Hardens model against crafted inputs
+   - Dual benefit: security + model robustness
+
+EXPLOITATION LIKELIHOOD:
+- Requires domain expertise in ML model extraction techniques
+- No automated tools publicly available for TensorFlow Serving exploitation
+- Academic research exists but limited practical weaponization
+- Your defense-in-depth (rate limiting + WAF + mTLS) significantly raises attack bar
+
+RECOMMENDATION:
+Accept risk for 45-day window with ML-specific controls. Schedule upgrade
+during next sprint planning cycle (June 20-July 15).
+
+We will provide weekly threat intelligence updates specific to ML/AI
+attack techniques.
+
+Best regards,
+
+Dr. Priya Sharma
+TensorFlow Security Team
+Google Brain
+tensorflow-security@google.com
+
+───────────────────────────────────────────────────────────────────────────
+
+From: ml-platform@agency.gov.sg
+To: tensorflow-security@google.com
+Cc: data-science-lead@agency.gov.sg
+Date: May 3, 2026 14:15 SGT
+Subject: RE: CVE-2024-7821 - Risk Acceptance with ML Mitigations
+
+───────────────────────────────────────────────────────────────────────────
+
+Dr. Sharma,
+
+Thank you for the comprehensive guidance. Our ML engineering team has
+reviewed the 45-day patch timeline and upgrade requirements.
+
+DECISION: Risk Acceptance with Enhanced ML Controls
+
+JUSTIFICATION:
+1. Fraud detection model retraining cycle is June 15-30
+2. Align TensorFlow upgrade with model refresh (avoid double deployments)
+3. Rate limiting + anomaly detection provide strong ML-specific defenses
+4. Current adversarial training already hardens against crafted inputs
+
+We will implement all recommended mitigations and schedule the upgrade
+for our June sprint.
+
+ML Platform Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF EMAIL THREAD
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'AI_Security_Risk_Assessment.txt': `═══════════════════════════════════════════════════════════════════════════
+AI/ML SECURITY RISK ASSESSMENT
+═══════════════════════════════════════════════════════════════════════════
+
+SYSTEM CLASSIFICATION: AI/ML Platform (Machine Learning)
+
+DETECTED AI/ML COMPONENTS:
+✓ Machine Learning Models: XGBoost + LSTM Neural Network
+✓ Model Inference Service: TensorFlow Serving
+✓ Model Training Pipeline: SageMaker automated training
+✓ Feature Engineering: Real-time feature extraction
+✓ Model Registry: MLflow for version control
+
+AI-SPECIFIC THREAT LANDSCAPE (MITRE ATLAS):
+
+1. MODEL EXTRACTION RISK:
+   - Threat: Attackers query inference API to reverse-engineer model
+   - Mitigant: Rate limiting (1000 queries/hour per user)
+   - Residual Risk: MEDIUM
+
+2. ADVERSARIAL EXAMPLES:
+   - Threat: Crafted transactions designed to evade fraud detection
+   - Mitigant: Adversarial training + input validation
+   - Residual Risk: MEDIUM-LOW
+
+3. MODEL POISONING:
+   - Threat: Malicious data injection during training
+   - Mitigant: Training data validation + anomaly detection
+   - Residual Risk: LOW
+
+4. MODEL INVERSION:
+   - Threat: Reconstruct sensitive training data from model
+   - Mitigant: Differential privacy + PII anonymization
+   - Residual Risk: LOW
+
+TRADITIONAL SECURITY (MITRE ATT&CK):
+✓ Microservices architecture with container orchestration
+✓ Kubernetes cluster on AWS cloud
+✓ API Gateway for access control
+✓ Network segmentation via Kubernetes network policies
+
+DEPLOYMENT CONTEXT:
+- Cloud Provider: AWS
+- Containerization: Docker on Kubernetes
+- AI Framework: TensorFlow + PyTorch
+- Production ML: Yes (real-time inference)
+
+RECOMMENDATION:
+Accept risk for 45-day window with enhanced ML-specific monitoring:
+- Model performance dashboards
+- Inference request pattern analysis
+- Data drift alerts
+- Adversarial attack detection
+═══════════════════════════════════════════════════════════════════════════`
+      }
+    },
+
+    'serverless': {
+      name: 'Serverless Architecture',
+      description: 'Event-driven serverless system with AWS Lambda and API Gateway',
+      files: {
+        'RA_Presentation_Serverless_Platform.txt': `═══════════════════════════════════════════════════════════════════════════
+RISK ACCEPTANCE SUBMISSION - SERVERLESS DOCUMENT PROCESSING
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT: Citizen Document Processing Platform
+ARCHITECTURE TYPE: Serverless Event-Driven Architecture
+SUBMISSION ID: RA-2026-0201
+DATE: May 8, 2026
+
+───────────────────────────────────────────────────────────────────────────
+SYSTEM ARCHITECTURE OVERVIEW
+───────────────────────────────────────────────────────────────────────────
+
+The Citizen Document Processing Platform is built entirely on serverless
+architecture using AWS Lambda functions and event-driven patterns.
+
+SERVERLESS FUNCTIONS:
+- Document Upload Handler: Lambda function triggered by S3 uploads
+- OCR Processor: Lambda function for document text extraction
+- Validation Function: Lambda for document validation rules
+- Notification Function: Lambda for email/SMS notifications
+- Archive Function: Lambda for long-term storage
+
+EVENT-DRIVEN ARCHITECTURE:
+- Event Source: S3 bucket events trigger Lambda functions
+- Event Bus: Amazon EventBridge for event routing
+- Message Queue: SQS for async processing
+- Step Functions: AWS Step Functions for workflow orchestration
+
+AWS LAMBDA DETAILS:
+- Runtime: Python 3.11 and Node.js 18
+- Memory: 512MB - 3GB depending on function
+- Timeout: 15 minutes max for OCR processing
+- Concurrency: 1000 concurrent executions
+- Cold Start Mitigation: Provisioned concurrency for critical functions
+
+API GATEWAY:
+- Type: AWS API Gateway (REST API)
+- Authentication: Cognito User Pools
+- Authorization: Lambda authorizer function
+- Rate Limiting: 10,000 requests per second
+- Endpoint: https://api.documents.gov.sg
+
+DATA STORAGE:
+- Document Storage: Amazon S3 buckets
+- Metadata: DynamoDB for document metadata
+- Cache: None (stateless functions)
+- Archive: S3 Glacier for long-term retention
+
+CLOUD SERVICES:
+- Compute: AWS Lambda (serverless functions)
+- API: Amazon API Gateway
+- Storage: Amazon S3
+- Database: Amazon DynamoDB
+- OCR: Amazon Textract for document processing
+- Notifications: Amazon SNS + SES
+- Monitoring: CloudWatch Logs + X-Ray tracing
+
+WORKFLOW:
+1. Citizen uploads document to S3 via API Gateway
+2. S3 event triggers Document Upload Handler Lambda
+3. Lambda invokes Step Functions workflow
+4. OCR Processor Lambda extracts text using Textract
+5. Validation Function checks document compliance
+6. Notification Function sends confirmation email
+7. Archive Function moves to long-term storage
+
+SECURITY:
+- Function Isolation: Each Lambda has minimal IAM permissions
+- Encryption: S3 buckets encrypted at rest (SSE-S3)
+- Network: Lambda functions in VPC for database access
+- API Security: AWS WAF protecting API Gateway
+- Secrets: AWS Secrets Manager for API keys
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS
+───────────────────────────────────────────────────────────────────────────
+
+CVE ID: CVE-2024-9204
+CVSS Score: 5.9 (MEDIUM)
+Component: Python Lambda Runtime (3.11)
+Impact: Dependency vulnerability in boto3 SDK
+
+───────────────────────────────────────────────────────────────────────────
+COMPENSATING CONTROLS
+───────────────────────────────────────────────────────────────────────────
+
+1. Function Isolation: Each Lambda has minimal IAM permissions (least privilege)
+2. Network Isolation: VPC isolation for sensitive functions
+3. Input Validation: API Gateway request validation schemas
+4. WAF Protection: AWS WAF rules blocking exploit patterns
+5. Monitoring: CloudWatch alarms for suspicious activity
+6. Immutable Infrastructure: Functions redeployed from clean images
+
+ACCEPTANCE PERIOD: 30 days (Lambda runtime update scheduled)
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Serverless_Architecture_Diagram.txt': `═══════════════════════════════════════════════════════════════════════════
+SERVERLESS ARCHITECTURE DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE PATTERN: Event-Driven Serverless (Function-as-a-Service)
+
+API LAYER:
+├─ Amazon API Gateway (REST API)
+├─ Authentication: AWS Cognito User Pools
+├─ Authorization: Lambda Authorizer function
+└─ Endpoints:
+   - POST /documents/upload
+   - GET /documents/{id}
+   - DELETE /documents/{id}
+
+SERVERLESS FUNCTIONS (AWS Lambda):
+
+1. upload-handler (Python 3.11)
+   - Trigger: API Gateway POST /documents/upload
+   - Action: Validates upload, stores in S3, triggers workflow
+   - Memory: 512MB
+   - Timeout: 30 seconds
+
+2. ocr-processor (Python 3.11)
+   - Trigger: S3 event on document upload
+   - Action: Calls Amazon Textract for OCR
+   - Memory: 3GB (OCR processing)
+   - Timeout: 15 minutes
+
+3. validator-function (Node.js 18)
+   - Trigger: EventBridge event from OCR completion
+   - Action: Validates extracted text against rules
+   - Memory: 1GB
+   - Timeout: 5 minutes
+
+4. notification-function (Node.js 18)
+   - Trigger: SQS message from validator
+   - Action: Sends email via SES, SMS via SNS
+   - Memory: 512MB
+   - Timeout: 1 minute
+
+5. archive-function (Python 3.11)
+   - Trigger: EventBridge scheduled rule (daily)
+   - Action: Moves old documents to Glacier
+   - Memory: 1GB
+   - Timeout: 15 minutes
+
+EVENT FLOW:
+User Request → API Gateway → Lambda Authorizer → upload-handler Lambda
+                                                        ↓
+                                                    S3 Bucket
+                                                        ↓
+                                                S3 Event Trigger
+                                                        ↓
+                                                ocr-processor Lambda
+                                                        ↓
+                                            Amazon Textract (OCR)
+                                                        ↓
+                                                EventBridge Event
+                                                        ↓
+                                            validator-function Lambda
+                                                        ↓
+                                                    SQS Queue
+                                                        ↓
+                                            notification-function Lambda
+
+STEP FUNCTIONS WORKFLOW:
+- Orchestrates multi-step document processing
+- Handles retries and error handling
+- Parallel processing for multiple documents
+
+DATA STORES:
+- S3 Buckets: Raw documents, processed documents
+- DynamoDB: Document metadata and status
+- S3 Glacier: Long-term archive storage
+
+SERVERLESS PATTERN: Event-driven with loose coupling
+CLOUD PROVIDER: Amazon Web Services (AWS)
+NO TRADITIONAL SERVERS: Fully serverless, no EC2 instances
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'AWS_Lambda_Security_Email.txt': `═══════════════════════════════════════════════════════════════════════════
+EMAIL CORRESPONDENCE - AWS LAMBDA RUNTIME VULNERABILITY
+═══════════════════════════════════════════════════════════════════════════
+
+From: aws-security-announce@amazon.com
+To: devops@agency.gov.sg
+Date: May 5, 2026 11:00 PST
+Subject: AWS Lambda Python 3.11 Runtime - Security Bulletin CVE-2024-9204
+
+───────────────────────────────────────────────────────────────────────────
+
+Dear AWS Customer,
+
+AWS Security has identified CVE-2024-9204 (CVSS 5.9 MEDIUM) affecting
+boto3 SDK dependency in Python 3.11 Lambda runtime.
+
+PATCH TIMELINE:
+- Updated Python 3.11 runtime: June 5, 2026 (30 days)
+- Automatic runtime update: Opt-in (requires customer action)
+- Lambda layer alternative: Available June 1, 2026
+
+SERVERLESS-SPECIFIC CONSIDERATIONS:
+
+1. ZERO-DOWNTIME DEPLOYMENT:
+   Lambda runtime updates are non-disruptive:
+   - New invocations use updated runtime immediately
+   - In-flight invocations complete on old runtime
+   - No deployment required (runtime managed by AWS)
+
+2. ALTERNATIVE MITIGATION (Lambda Layers):
+   - Deploy patched boto3 as Lambda layer
+   - Override built-in boto3 version
+   - Available June 1 (4 days earlier than runtime update)
+   - Recommended for critical functions
+
+3. FUNCTION ISOLATION BENEFITS:
+   - Each Lambda function has isolated execution environment
+   - IAM least privilege limits blast radius
+   - VPC isolation for database-connected functions
+   - No lateral movement risk (stateless functions)
+
+IMPACT ASSESSMENT FOR YOUR ACCOUNT:
+- Affected functions: 5 (upload-handler, ocr-processor, validator-function,
+  notification-function, archive-function)
+- Severity: LOW (all functions use boto3 but with minimal S3/DynamoDB operations)
+- Exploitation requires: Crafted AWS API responses (difficult to achieve)
+
+COMPENSATING CONTROLS:
+1. API Gateway WAF: Already blocks malicious payloads before Lambda
+2. Input Validation: Request schemas prevent crafted inputs
+3. Lambda Authorizer: Authentication before function invocation
+4. CloudWatch Alarms: Detect anomalous function behavior
+5. VPC Isolation: Sensitive functions not exposed to internet
+
+SERVERLESS SECURITY POSTURE:
+Your serverless architecture provides inherent defense-in-depth:
+- Immutable infrastructure (functions redeployed from clean images)
+- No persistent attack surface (execution environment destroyed after invocation)
+- Limited function execution time (30 second timeout = limited attack window)
+- CloudWatch logs capture all invocations for forensic analysis
+
+RECOMMENDATION:
+Accept risk for 30-day window. Your serverless security controls
+(WAF + input validation + function isolation) make exploitation
+highly unlikely.
+
+AWS Security Team will monitor for any threat intelligence updates.
+
+Best regards,
+
+AWS Security Notifications
+aws-security-announce@amazon.com
+
+───────────────────────────────────────────────────────────────────────────
+
+From: devops@agency.gov.sg
+To: aws-security-announce@amazon.com
+Date: May 6, 2026 09:45 SGT
+Subject: RE: CVE-2024-9204 - Risk Acceptance for Lambda Runtime
+
+───────────────────────────────────────────────────────────────────────────
+
+AWS Security Team,
+
+We acknowledge the 30-day runtime update timeline for CVE-2024-9204.
+
+DECISION: Accept risk until June 5 runtime update
+
+RATIONALE:
+1. Serverless architecture provides strong isolation guarantees
+2. WAF + input validation block exploit vectors
+3. 30-day window is minimal (shorter than typical patch cycles)
+4. Automatic runtime update requires zero engineering effort
+
+We will enable automatic runtime updates on June 5 when Python 3.11
+patch is released.
+
+DevOps Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF EMAIL CORRESPONDENCE
+═══════════════════════════════════════════════════════════════════════════`,
+
+        'Serverless_Security_Assessment.txt': `═══════════════════════════════════════════════════════════════════════════
+SECURITY ASSESSMENT - SERVERLESS PLATFORM
+═══════════════════════════════════════════════════════════════════════════
+
+DEPLOYMENT MODEL: Cloud (AWS Serverless)
+ARCHITECTURE: Event-Driven Serverless (FaaS - Function-as-a-Service)
+
+VERIFIED COMPONENTS:
+✓ Serverless Functions: 5 AWS Lambda functions identified
+✓ API Gateway: Amazon API Gateway (REST API)
+✓ Event Bus: Amazon EventBridge for event routing
+✓ Message Queue: Amazon SQS for async processing
+✓ Workflow: AWS Step Functions for orchestration
+✓ Storage: Amazon S3 buckets
+✓ Database: Amazon DynamoDB (NoSQL)
+✓ Cloud Services: Textract (OCR), SNS (notifications), SES (email)
+
+SECURITY CONTROLS:
+✓ WAF protection on API Gateway
+✓ IAM least privilege for Lambda functions
+✓ VPC isolation for sensitive functions
+✓ S3 bucket encryption (SSE-S3)
+✓ API authentication via Cognito
+✓ Lambda authorizer for fine-grained access control
+
+ARCHITECTURE CLASSIFICATION:
+- Type: Serverless Architecture (Event-Driven)
+- Pattern: Function-as-a-Service (FaaS) with event triggers
+- Cloud-Native: Full AWS serverless stack
+- No Traditional Servers: No EC2, no containers, pure Lambda
+
+SERVERLESS-SPECIFIC RISKS:
+1. Function Injection: Malicious code in Lambda deployments
+2. Over-Privileged Functions: IAM roles with excessive permissions
+3. Event Injection: Crafted S3 events triggering unintended behavior
+4. Cold Start DoS: Triggering many cold starts to exhaust concurrency
+5. Dependency Vulnerabilities: Vulnerable npm/pip packages in functions
+
+ATTACK SURFACE:
+- API Gateway is primary entry point (public-facing)
+- S3 bucket policies must prevent unauthorized uploads
+- Lambda function code is potential target if deployment compromised
+
+No AI/ML components detected.
+No container orchestration detected (pure serverless).
+No traditional 3-tier architecture (event-driven FaaS model).
+═══════════════════════════════════════════════════════════════════════════`
+      }
+    }
+  };
+
+  // Old demo files for backward compatibility
+  const legacyDemoFiles = {
+    'Test_for_Hackathon_desens.txt': `═══════════════════════════════════════════════════════════════════════════
+RISK ACCEPTANCE SUBMISSION - PRESENTATION SUMMARY
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT: E-Government Payment Gateway
+SUBMISSION ID: RA-2026-0042
+DATE: April 10, 2026
+SUBMITTED BY: Officer 1 (Product Security)
+
+───────────────────────────────────────────────────────────────────────────
+EXECUTIVE SUMMARY
+───────────────────────────────────────────────────────────────────────────
+
+This risk acceptance request pertains to CVE-2024-3457 (MEDIUM severity)
+identified in the E-Government Payment Gateway during routine vulnerability
+assessment.
+
+BUSINESS JUSTIFICATION:
+The affected component is part of a legacy system migration scheduled for
+decommissioning within 90 days. A full remediation would require significant
+development effort that is not cost-effective given the short remaining
+lifespan of the system.
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS
+───────────────────────────────────────────────────────────────────────────
+
+CVE ID: CVE-2024-3457
+CVSS Score: 6.5 (MEDIUM)
+Vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+
+Description: Information disclosure vulnerability allowing authenticated
+users to access sensitive configuration data through improper access controls.
+
+───────────────────────────────────────────────────────────────────────────
+PROPOSED COMPENSATING CONTROLS
+───────────────────────────────────────────────────────────────────────────
+
+1. NETWORK ISOLATION
+   • Server hosted in internal network accessible only by CAM
+   • Access restricted to authorized users only
+   • Physical and logical network segmentation implemented
+
+2. USER RESTRICTION
+   • Application usage limited to Good Luck Infra personnel only
+   • No external or citizen-facing access
+   • Strict authentication and authorization in place
+
+3. MONITORING & DETECTION
+   • Firewall and IPS solution deployed within Good Luck Infra
+   • Network monitoring actively in place
+   • SIEM integration for detection of malicious activities
+   • Security incident response team on standby
+
+───────────────────────────────────────────────────────────────────────────
+RISK ASSESSMENT
+───────────────────────────────────────────────────────────────────────────
+
+LIKELIHOOD: LOW
+- Requires authenticated access
+- Internal network only
+- Limited user base
+- Active monitoring
+
+IMPACT: MEDIUM
+- Potential information disclosure
+- No data modification capability
+- No service disruption capability
+
+RESIDUAL RISK: LOW
+With compensating controls in place, residual risk is acceptable for the
+90-day acceptance period.
+
+───────────────────────────────────────────────────────────────────────────
+TIMELINE
+───────────────────────────────────────────────────────────────────────────
+
+Acceptance Period Requested: 90 days (April 10, 2026 - July 10, 2026)
+System Decommission Date: July 15, 2026
+Migration to New Platform: June 2026
+
+───────────────────────────────────────────────────────────────────────────
+APPROVAL REQUEST
+───────────────────────────────────────────────────────────────────────────
+
+We request approval for this risk acceptance based on:
+✓ Comprehensive compensating controls
+✓ Limited exposure window (90 days)
+✓ Business continuity requirements
+✓ Cost-benefit analysis favoring acceptance over remediation
+
+═══════════════════════════════════════════════════════════════════════════
+END OF PRESENTATION
+═══════════════════════════════════════════════════════════════════════════`,
+    'Vendor_correspondence.txt': `═══════════════════════════════════════════════════════════════════════════
+EMAIL CORRESPONDENCE - VENDOR SECURITY ADVISORY
+═══════════════════════════════════════════════════════════════════════════
+
+From: security@goodluckinfra.gov.sg
+To: product-security@agency.gov.sg
+Date: April 8, 2026 14:32 SGT
+Subject: RE: CVE-2024-3457 - Security Advisory and Remediation Timeline
+
+───────────────────────────────────────────────────────────────────────────
+
+Dear Product Security Team,
+
+Thank you for reaching out regarding CVE-2024-3457 identified in the
+E-Government Payment Gateway system.
+
+VENDOR ASSESSMENT:
+We acknowledge the vulnerability and have conducted our own security
+assessment. Our findings align with the NVD classification of MEDIUM
+severity (CVSS 6.5).
+
+REMEDIATION OPTIONS:
+
+Option 1: Full Patch Deployment
+- Estimated effort: 6-8 weeks
+- Cost: $45,000
+- Risk: Moderate (requires system downtime during deployment)
+- Recommendation: NOT RECOMMENDED given decommission timeline
+
+Option 2: Risk Acceptance with Compensating Controls
+- Estimated effort: 1 week (documentation and monitoring setup)
+- Cost: $3,000
+- Risk: Low (with proper controls)
+- Recommendation: RECOMMENDED for current situation
+
+TECHNICAL ANALYSIS:
+The vulnerability requires the following preconditions for exploitation:
+1. Valid authenticated session
+2. Network access to internal API endpoint
+3. Knowledge of specific API structure
+4. Absence of network-level filtering
+
+COMPENSATING CONTROLS VALIDATION:
+We have reviewed your proposed compensating controls and confirm they
+adequately address the attack vectors:
+
+✓ Network segmentation prevents external access
+✓ Authentication requirements reduce attack surface
+✓ IPS/Firewall rules block known exploit patterns
+✓ SIEM monitoring provides early warning capability
+
+COMPLIANCE CONSIDERATIONS:
+This approach aligns with NIST 800-53 controls:
+- AC-4: Information Flow Enforcement
+- SI-3: Malicious Code Protection
+- SI-4: Information System Monitoring
+- SC-7: Boundary Protection
+
+VENDOR RECOMMENDATION:
+Given the 90-day window until system decommissioning and the comprehensive
+compensating controls in place, we recommend proceeding with risk acceptance
+rather than full remediation.
+
+We commit to:
+- Provide security monitoring support
+- Immediate notification of any threat intelligence updates
+- Emergency patch if exploitation is observed in the wild
+
+Please let us know if you need any additional technical documentation or
+clarification.
+
+Best regards,
+
+Dr. Sarah Chen
+Chief Security Officer
+Good Luck Infrastructure Services
+security@goodluckinfra.gov.sg
++65 6XXX XXXX
+
+───────────────────────────────────────────────────────────────────────────
+ATTACHMENT: Vendor Security Assessment Report (see separate document)
+───────────────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════════════
+
+From: product-security@agency.gov.sg
+To: security@goodluckinfra.gov.sg
+Date: April 9, 2026 09:15 SGT
+Subject: RE: CVE-2024-3457 - Security Advisory and Remediation Timeline
+
+───────────────────────────────────────────────────────────────────────────
+
+Dr. Chen,
+
+Thank you for the comprehensive assessment. We concur with your
+recommendation to proceed with risk acceptance.
+
+We will prepare the formal risk acceptance documentation with the
+compensating controls outlined in your message.
+
+Expected submission for approval: April 10, 2026
+
+Regards,
+Officer 1
+Product Security Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF CORRESPONDENCE
+═══════════════════════════════════════════════════════════════════════════`,
+    'Test_VMS_vulnerability_report.txt': `═══════════════════════════════════════════════════════════════════════════
+VULNERABILITY MANAGEMENT SYSTEM - DETAILED REPORT
+═══════════════════════════════════════════════════════════════════════════
+
+REPORT ID: VMS-2026-Q2-0157
+SCAN DATE: April 5, 2026
+PROJECT: E-Government Payment Gateway
+SCANNER: Qualys VMDR + Manual Assessment
+
+───────────────────────────────────────────────────────────────────────────
+EXECUTIVE SUMMARY
+───────────────────────────────────────────────────────────────────────────
+
+Total Vulnerabilities Found: 24
+├─ CRITICAL: 0
+├─ HIGH: 0
+├─ MEDIUM: 1 (CVE-2024-3457) ← SUBJECT OF THIS RISK ACCEPTANCE
+├─ LOW: 8
+└─ INFORMATIONAL: 15
+
+───────────────────────────────────────────────────────────────────────────
+VULNERABILITY DETAILS: CVE-2024-3457
+───────────────────────────────────────────────────────────────────────────
+
+CVE IDENTIFIER: CVE-2024-3457
+PUBLISHED: March 15, 2024
+LAST MODIFIED: March 20, 2024
+
+CVSS v3.1 METRICS:
+├─ Base Score: 6.5 (MEDIUM)
+├─ Vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+└─ Breakdown:
+   • Attack Vector (AV): Network (N)
+   • Attack Complexity (AC): Low (L)
+   • Privileges Required (PR): Low (L)
+   • User Interaction (UI): None (N)
+   • Scope (S): Unchanged (U)
+   • Confidentiality (C): High (H)
+   • Integrity (I): None (N)
+   • Availability (A): None (N)
+
+AFFECTED COMPONENT:
+├─ Application: E-Gov Payment Gateway
+├─ Module: Configuration API v2.1.4
+├─ Library: gov-payment-config@2.1.4
+└─ Location: /api/v2/admin/config
+
+VULNERABILITY DESCRIPTION:
+An improper access control vulnerability exists in the Configuration API
+that allows authenticated users with low-level privileges to read sensitive
+system configuration data, including database connection strings (with
+masked credentials), internal API endpoints, and system architecture details.
+
+EXPLOITATION REQUIREMENTS:
+1. Valid user account (any privilege level)
+2. Network connectivity to internal API endpoint
+3. Knowledge of API structure: GET /api/v2/admin/config
+4. Standard HTTP client
+
+POTENTIAL IMPACT:
+├─ Information Disclosure: HIGH
+│  └─ Exposure of system architecture and configuration
+├─ Privilege Escalation: LOW
+│  └─ Information could aid in further attacks
+└─ Data Breach: LOW
+   └─ Credentials are masked, limited sensitive data exposure
+
+───────────────────────────────────────────────────────────────────────────
+THREAT INTELLIGENCE
+───────────────────────────────────────────────────────────────────────────
+
+NVD STATUS: Published, Active
+CISA KEV: Not listed (as of April 5, 2026)
+EPSS SCORE: 0.00234 (0.234% probability of exploitation in next 30 days)
+
+KNOWN EXPLOITS: None publicly available
+EXPLOIT MATURITY: Proof of Concept (Private)
+
+PUBLIC REFERENCES:
+• https://nvd.nist.gov/vuln/detail/CVE-2024-3457
+• https://github.com/gov-sg/payment-config/security/advisories/GHSA-xxxx
+• Vendor Advisory: GLIF-SA-2024-003
+
+───────────────────────────────────────────────────────────────────────────
+TECHNICAL ANALYSIS
+───────────────────────────────────────────────────────────────────────────
+
+AFFECTED ENDPOINTS:
+GET /api/v2/admin/config
+├─ Expected: Requires admin role
+└─ Actual: Accepts any authenticated user
+
+PROOF OF CONCEPT:
+\`\`\`
+curl -H "Authorization: Bearer {user_token}" \\
+     https://payment.internal.gov.sg/api/v2/admin/config
+\`\`\`
+
+Expected Response: HTTP 403 Forbidden
+Actual Response: HTTP 200 OK with configuration JSON
+
+SAMPLE RESPONSE (SANITIZED):
+{
+  "database": {
+    "host": "db-primary.internal",
+    "port": 5432,
+    "name": "payment_prod",
+    "user": "app_user",
+    "password": "***MASKED***"
+  },
+  "api": {
+    "internal_endpoints": [...],
+    "rate_limits": {...}
+  }
+}
+
+───────────────────────────────────────────────────────────────────────────
+REMEDIATION OPTIONS
+───────────────────────────────────────────────────────────────────────────
+
+OPTION 1: Code Patch
+├─ Implement proper role-based access control
+├─ Effort: 3-4 weeks (development + testing)
+├─ Cost: $35,000 - $45,000
+└─ Risk: Regression testing required
+
+OPTION 2: WAF Rule
+├─ Block unauthorized access at application firewall
+├─ Effort: 1 week
+├─ Cost: $5,000
+└─ Risk: May impact legitimate admin access
+
+OPTION 3: Risk Acceptance
+├─ Accept risk with compensating controls
+├─ Effort: 1 week (documentation)
+├─ Cost: $3,000
+└─ Risk: Acceptable with proper controls
+
+───────────────────────────────────────────────────────────────────────────
+ASSESSMENT TEAM RECOMMENDATION
+───────────────────────────────────────────────────────────────────────────
+
+Given the following factors:
+✓ Low EPSS score (0.234%)
+✓ No known public exploits
+✓ System decommissioning in 90 days
+✓ Internal network deployment only
+✓ Limited user base
+✓ Active monitoring in place
+
+RECOMMENDATION: ACCEPT RISK with compensating controls for 90-day period
+
+───────────────────────────────────────────────────────────────────────────
+COMPENSATING CONTROLS VALIDATION
+───────────────────────────────────────────────────────────────────────────
+
+PROPOSED CONTROLS:
+1. ✓ Network Segmentation (Verified: April 6, 2026)
+2. ✓ IPS Signatures Updated (Verified: April 6, 2026)
+3. ✓ SIEM Alerting Configured (Verified: April 7, 2026)
+4. ✓ User Access Audit Completed (Verified: April 7, 2026)
+
+EFFECTIVENESS ASSESSMENT:
+├─ Prevents external exploitation: YES
+├─ Reduces insider threat: YES
+├─ Provides detection capability: YES
+└─ Overall Risk Reduction: 85%
+
+───────────────────────────────────────────────────────────────────────────
+APPENDIX A: SCAN EVIDENCE
+───────────────────────────────────────────────────────────────────────────
+
+Scanner Output:
+[MEDIUM] CVE-2024-3457 - Improper Access Control
+Host: 10.0.1.45
+Port: 443/tcp
+Service: HTTPS
+Application: E-Gov Payment Gateway
+Confidence: 100%
+First Detected: 2026-04-05 02:34:17 SGT
+Last Confirmed: 2026-04-05 14:22:09 SGT
+
+───────────────────────────────────────────────────────────────────────────
+REPORT METADATA
+───────────────────────────────────────────────────────────────────────────
+
+Generated: April 5, 2026 15:47 SGT
+Report Owner: Vulnerability Management Team
+Classification: RESTRICTED
+Distribution: Product Security, InfoSec, Project Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF REPORT
+═══════════════════════════════════════════════════════════════════════════`
+  };
+
+  const downloadFile = (filename: string, content: string, projectPrefix?: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+
+    // Add project name prefix if provided
+    if (projectPrefix) {
+      // Sanitize project name for filename (replace spaces with underscores, remove special chars)
+      const sanitizedPrefix = projectPrefix
+        .replace(/[^a-zA-Z0-9\s-]/g, '')
+        .replace(/\s+/g, '_')
+        .substring(0, 50); // Limit length
+      a.download = `${sanitizedPrefix}_${filename}`;
+    } else {
+      a.download = filename;
+    }
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const copyToClipboard = (text: string) => {
+    // Fallback copy method that doesn't use Clipboard API
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+      alert('✅ SQL copied to clipboard! Paste it in Supabase SQL Editor.');
+    } catch (err) {
+      alert('❌ Copy failed. Please manually select and copy the SQL below.');
+    }
+
+    document.body.removeChild(textarea);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="border-b border-border p-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-medium">Supabase Setup Guide</h2>
+            <p className="text-sm text-muted-foreground mt-1">Complete these steps to enable persistent storage</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-secondary rounded">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-border px-6 py-3 flex gap-2">
+          <button
+            onClick={() => setActiveTab('quick')}
+            className={`px-4 py-2 rounded text-sm transition-colors ${
+              activeTab === 'quick'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-foreground hover:bg-accent'
+            }`}
+          >
+            <Zap className="w-4 h-4 inline mr-2" />
+            Quick Start
+          </button>
+          <button
+            onClick={() => setActiveTab('checklist')}
+            className={`px-4 py-2 rounded text-sm transition-colors ${
+              activeTab === 'checklist'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-foreground hover:bg-accent'
+            }`}
+          >
+            <CheckSquare className="w-4 h-4 inline mr-2" />
+            Checklist
+          </button>
+          <button
+            onClick={() => setActiveTab('sql')}
+            className={`px-4 py-2 rounded text-sm transition-colors ${
+              activeTab === 'sql'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-foreground hover:bg-accent'
+            }`}
+          >
+            <FileText className="w-4 h-4 inline mr-2" />
+            SQL File
+          </button>
+          <button
+            onClick={() => setActiveTab('demos')}
+            className={`px-4 py-2 rounded text-sm transition-colors ${
+              activeTab === 'demos'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-foreground hover:bg-accent'
+            }`}
+          >
+            <Download className="w-4 h-4 inline mr-2" />
+            Demo Files
+          </button>
+          <button
+            onClick={() => setActiveTab('architecture')}
+            className={`px-4 py-2 rounded text-sm transition-colors ${
+              activeTab === 'architecture'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-foreground hover:bg-accent'
+            }`}
+          >
+            <Layers className="w-4 h-4 inline mr-2" />
+            Architecture Analysis
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === 'quick' && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded p-4">
+                <h3 className="font-medium mb-2">⏱️ Total Time: ~5 minutes</h3>
+                <p className="text-sm text-muted-foreground">Follow these 3 steps to activate Supabase integration</p>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 rounded p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">⚡</span>
+                  <h3 className="font-medium">New: One-Click Auto Run Demo!</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Go to the <strong>"Demo Files"</strong> tab and click the green <strong>"Auto Run Demo"</strong> button
+                  for instant architecture analysis - no manual uploading needed!
+                </p>
+                <p className="text-xs text-green-700 mb-2">
+                  <strong>✨ Features:</strong> 4 architecture sets (3-Tier, Microservices, AI/ML, Serverless) with vendor
+                  correspondence showing patch timelines and business constraints.
+                </p>
+                <p className="text-xs text-blue-700">
+                  <strong>⏱️ Time saved:</strong> 30 seconds vs 2+ minutes for manual download/upload!
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">Step 1: Run Complete Database Setup (2 min)</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm">
+                    <li>Go to <a href="https://supabase.com/dashboard/project/rcojgwrpyurkwbvlyxmi" target="_blank" className="text-blue-600 underline">Supabase Dashboard</a></li>
+                    <li>Click <strong>"SQL Editor"</strong> in left sidebar</li>
+                    <li>Click <strong>"New query"</strong></li>
+                    <li>Switch to the <strong>"SQL File"</strong> tab above, click <strong>"Copy SQL"</strong></li>
+                    <li>Paste in SQL Editor and click <strong>"Run"</strong></li>
+                    <li>✅ Verify: "Success. No rows returned" (this is correct!)</li>
+                  </ol>
+                  <p className="text-xs text-green-600 mt-2 font-medium">
+                    ℹ️ This SQL now includes storage bucket policies - one SQL does everything!
+                  </p>
+                </div>
+
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">Step 2: Create Storage Buckets (2 min)</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm">
+                    <li>In Supabase, click <strong>"Storage"</strong> in left sidebar</li>
+                    <li>Click <strong>"New bucket"</strong></li>
+                    <li>Create these 3 buckets (toggle <strong>Public</strong> ON for each):
+                      <ul className="list-disc list-inside ml-6 mt-2">
+                        <li><code className="bg-secondary px-1">ra-presentation</code></li>
+                        <li><code className="bg-secondary px-1">correspondence</code></li>
+                        <li><code className="bg-secondary px-1">supporting-evidence</code></li>
+                      </ul>
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">Step 3: Test Architecture Analysis (30 seconds!)</h3>
+                  <div className="bg-yellow-50 border border-yellow-300 rounded p-3 mb-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">⚡</span>
+                      <strong className="text-sm">Instant Demo (Recommended)</strong>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-sm">
+                      <li>Go to <strong>"Demo Files"</strong> tab above</li>
+                      <li>Choose any architecture type</li>
+                      <li>Click <strong>"Auto Run Demo"</strong> button</li>
+                      <li>Watch architecture analysis appear instantly!</li>
+                      <li>🎉 Done in 30 seconds!</li>
+                    </ol>
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-2">Or manually download and upload:</div>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Go to <strong>"Demo Files"</strong> tab</li>
+                    <li>Click <strong>"Download All Files"</strong></li>
+                    <li>Upload files to the color-coded zones</li>
+                    <li>View the analysis results</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'checklist' && (
+            <div className="space-y-4">
+              <h3 className="font-medium mb-4">Complete Setup Checklist</h3>
+
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                <h4 className="font-medium text-sm mb-2">Part 1: Supabase Database Setup</h4>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Open Supabase Dashboard</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Click "SQL Editor" → "New query"</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Copy SQL from "SQL File" tab and paste</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Click "Run" and verify success message</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4 mt-4">
+                <h4 className="font-medium text-sm mb-2">Part 2: Storage Buckets</h4>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Click "Storage" in sidebar</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Create bucket: <code className="bg-secondary px-1">ra-presentation</code> (Public ON)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Create bucket: <code className="bg-secondary px-1">correspondence</code> (Public ON)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Create bucket: <code className="bg-secondary px-1">supporting-evidence</code> (Public ON)</span>
+                </div>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded p-3 mb-4 mt-4">
+                <h4 className="font-medium text-sm mb-2">Part 3: Test Architecture Analysis</h4>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-300 rounded p-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">⚡</span>
+                  <strong className="text-sm">Quick Option: Auto Run Demo</strong>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1" />
+                    <span>Go to "Demo Files" tab</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1" />
+                    <span>Choose any architecture type</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1" />
+                    <span>Click <strong>"Auto Run Demo"</strong> button (green button)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1" />
+                    <span>Watch instant architecture analysis! ✨</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground mb-2 mt-3">Or, manual upload option:</div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Go to "Demo Files" tab</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Choose an architecture type (3-Tier, Microservices, AI/ML, or Serverless)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Click "Download All Files" for that architecture set</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Upload demo files to appropriate zones (check color-coded badges)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Verify "System Architecture Analysis" box shows detected architecture</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Verify "Threat Modeling Analysis" box shows MITRE ATT&CK tactics</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>For AI/ML demo: Verify MITRE ATLAS framework appears</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>Click "View Artifacts" to verify files persisted in Supabase</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" />
+                  <span>🎉 Test complete! Try different architecture sets</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'sql' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">Database Schema SQL</h3>
+                <button
+                  onClick={() => copyToClipboard(sqlContent)}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90"
+                >
+                  Copy SQL
+                </button>
+              </div>
+              <pre className="bg-secondary p-4 rounded text-xs overflow-x-auto font-mono">
+                {sqlContent}
+              </pre>
+            </div>
+          )}
+
+          {activeTab === 'demos' && (
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-300 rounded p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-3xl">⚡</span>
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-2">📁 Synthetic Demo Files for Architecture Analysis</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Choose an architecture type below, then click the green <strong>"Auto Run Demo"</strong> button
+                      for instant architecture analysis - no manual downloading or uploading needed!
+                    </p>
+                    <div className="bg-white border border-green-300 rounded px-3 py-2 text-xs">
+                      <strong>New:</strong> Auto Run Demo button automatically populates all upload boxes and runs the analysis.
+                      The setup guide will close so you can see the results immediately. 🚀
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-300 rounded p-4">
+                <h4 className="font-medium mb-3 text-sm">Upload Zone Guide</h4>
+                <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div className="bg-blue-100 border-2 border-blue-300 rounded p-2.5 text-center">
+                    <div className="font-bold text-blue-800 mb-1">RA Presentation</div>
+                    <div className="text-blue-700">Files with "RA_" or "Presentation" in name</div>
+                  </div>
+                  <div className="bg-purple-100 border-2 border-purple-300 rounded p-2.5 text-center">
+                    <div className="font-bold text-purple-800 mb-1">Correspondence</div>
+                    <div className="text-purple-700">Emails, vendor communications</div>
+                  </div>
+                  <div className="bg-green-100 border-2 border-green-300 rounded p-2.5 text-center">
+                    <div className="font-bold text-green-800 mb-1">Supporting Evidence</div>
+                    <div className="text-green-700">Architecture docs, security assessments</div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  Each file below is color-coded to match its upload zone ⬆️
+                </p>
+                <div className="bg-white border border-gray-300 rounded p-2 mt-3 text-center">
+                  <p className="text-xs text-gray-700">
+                    💾 <strong>Automatic Prefixing:</strong> Downloaded files include project name (e.g., <code className="bg-gray-100 px-1">National_Identity_Verification_Platform_RA_Presentation.txt</code>)
+                  </p>
+                </div>
+              </div>
+
+              {Object.entries(demoFileSets).map(([key, fileSet]) => {
+                // Extract project name from first file for prefix
+                const firstFileContent = Object.values(fileSet.files)[0];
+                const projectMatch = firstFileContent.match(/PROJECT:\s*([^\n]+)/i);
+                const projectPrefix = projectMatch ? projectMatch[1].trim() : fileSet.name;
+
+                return (
+                  <div key={key} className="border-2 border-border rounded-lg p-4 bg-card">
+                    <div className="mb-4">
+                      <h3 className="font-medium text-lg mb-1">{fileSet.name}</h3>
+                      <p className="text-sm text-muted-foreground">{fileSet.description}</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {Object.entries(fileSet.files).map(([filename, content]) => {
+                        // Determine upload zone
+                        const uploadZone = filename.includes('Presentation') || filename.includes('RA_')
+                          ? { name: 'RA Presentation', color: 'bg-blue-100 text-blue-800 border-blue-300' }
+                          : filename.includes('Email') || filename.includes('Correspondence') || filename.includes('Vendor') || filename.includes('Thread')
+                          ? { name: 'Correspondence', color: 'bg-purple-100 text-purple-800 border-purple-300' }
+                          : { name: 'Supporting Evidence', color: 'bg-green-100 text-green-800 border-green-300' };
+
+                        return (
+                          <div key={filename} className="border-2 border-border rounded bg-card p-3">
+                            <div className="flex items-start justify-between mb-2 gap-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                                  <span className="font-medium text-sm">{filename}</span>
+                                </div>
+                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border ${uploadZone.color} text-xs font-medium`}>
+                                  <span>📤 Upload to:</span>
+                                  <span className="font-bold">{uploadZone.name}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => downloadFile(filename, content, projectPrefix)}
+                                className="px-3 py-1.5 bg-primary text-primary-foreground rounded hover:opacity-90 flex items-center gap-1.5 text-xs flex-shrink-0"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                Download
+                              </button>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-2">
+                              {content.length.toLocaleString()} characters • Downloaded as: <span className="font-mono">{projectPrefix.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_').substring(0, 50)}_{filename}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-border space-y-2">
+                      <button
+                        onClick={() => {
+                          Object.entries(fileSet.files).forEach(([filename, content]) => {
+                            downloadFile(filename, content, projectPrefix);
+                          });
+                        }}
+                        className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download All {Object.keys(fileSet.files).length} Files
+                      </button>
+                    {onAutoRunDemo && (
+                      <button
+                        onClick={() => handleAutoRunDemo(fileSet)}
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center justify-center gap-2 font-medium"
+                      >
+                        <span className="text-lg">▶️</span>
+                        Auto Run Demo (Instant Analysis!)
+                      </button>
+                    )}
+                  </div>
+                </div>
+                );
+              })}
+
+              <div className="bg-green-50 border border-green-200 rounded p-4 mt-6">
+                <h4 className="font-medium mb-3">💡 How to Use These Demo Files</h4>
+                <div className="bg-white border-2 border-green-300 rounded p-3 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">⚡</span>
+                    <span className="font-bold text-green-800">Quick Demo (Recommended!)</span>
+                  </div>
+                  <p className="text-sm mb-2">
+                    Click <strong>"Auto Run Demo"</strong> button to instantly populate upload boxes and see architecture analysis in action!
+                  </p>
+                  <p className="text-xs text-green-700">
+                    The setup guide will close automatically and you'll see the results immediately.
+                  </p>
+                </div>
+                <div className="text-sm mb-2 font-medium">Or, manually download and upload:</div>
+                <ol className="list-decimal list-inside text-sm space-y-2">
+                  <li>Choose an architecture type above (3-Tier, Microservices, AI/ML, or Serverless)</li>
+                  <li>Click "Download All Files" to get the complete set (4 files per architecture)
+                    <div className="text-xs text-muted-foreground ml-6 mt-1">
+                      ℹ️ Files are automatically prefixed with project name for organization
+                    </div>
+                  </li>
+                  <li>Each file has a <strong>color-coded badge</strong> showing which upload zone to use:
+                    <ul className="list-none ml-6 mt-2 space-y-2">
+                      <li className="flex items-center gap-2">
+                        <span className="inline-block px-2 py-0.5 rounded border bg-blue-100 text-blue-800 border-blue-300 text-xs font-bold">RA Presentation</span>
+                        <span>→ Upload to the <strong>left box</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="inline-block px-2 py-0.5 rounded border bg-purple-100 text-purple-800 border-purple-300 text-xs font-bold">Correspondence</span>
+                        <span>→ Upload to the <strong>middle box</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="inline-block px-2 py-0.5 rounded border bg-green-100 text-green-800 border-green-300 text-xs font-bold">Supporting Evidence</span>
+                        <span>→ Upload to the <strong>right box</strong></span>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>Watch the System Architecture Analysis box automatically identify:
+                    <ul className="list-disc list-inside ml-6 mt-1.5 space-y-1">
+                      <li>Architecture type (3-tier, microservices, serverless, etc.)</li>
+                      <li>Components (API gateway, databases, containers, ML models)</li>
+                      <li>AI/ML systems (triggers MITRE ATLAS framework)</li>
+                      <li>Deployment model (cloud vs internal network)</li>
+                    </ul>
+                  </li>
+                  <li>See the Threat Modeling Analysis box generate:
+                    <ul className="list-disc list-inside ml-6 mt-1.5 space-y-1">
+                      <li>MITRE ATT&CK tactics tailored to the architecture</li>
+                      <li>MITRE ATLAS tactics for AI/ML systems</li>
+                      <li>Network diagram showing attack surface</li>
+                      <li>Specific techniques (T-codes) relevant to the system</li>
+                    </ul>
+                  </li>
+                  <li><strong>📧 Pro Tip:</strong> Read the vendor correspondence files - they contain patch timelines (e.g., "patch won't be ready for 3 months") that justify the risk acceptance decisions!</li>
+                </ol>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                <h4 className="font-medium mb-2">🎯 What Each File Set Demonstrates</h4>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <strong>3-Tier Web Application:</strong> Traditional architecture with presentation, application, and data layers. Internal network deployment with firewall/IPS.
+                    <br/>
+                    <span className="text-xs text-yellow-800">📧 Vendor email: 3-month patch delay → justifies 90-day risk acceptance</span>
+                  </div>
+                  <div>
+                    <strong>Microservices Architecture:</strong> Cloud-native with Kubernetes, API Gateway (Kong), multiple services, container security, and service mesh (Istio).
+                    <br/>
+                    <span className="text-xs text-yellow-800">📧 Kong vendor: 60-day patch timeline + migration complexity → off-peak season acceptance</span>
+                  </div>
+                  <div>
+                    <strong>AI/ML System:</strong> Triggers both MITRE ATT&CK and ATLAS frameworks. Includes TensorFlow, model inference, training pipelines, and adversarial defense.
+                    <br/>
+                    <span className="text-xs text-yellow-800">📧 TensorFlow team: 45-day patch + model re-export requirements → aligns with model retraining cycle</span>
+                  </div>
+                  <div>
+                    <strong>Serverless Architecture:</strong> Event-driven FaaS with AWS Lambda, API Gateway, S3, DynamoDB. Demonstrates serverless-specific threat modeling.
+                    <br/>
+                    <span className="text-xs text-yellow-800">📧 AWS: 30-day runtime update + automatic deployment → minimal risk window</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Legacy demo files for backward compatibility */}
+              <div className="border-t-2 border-border pt-6 mt-6">
+                <h3 className="font-medium mb-3">Legacy Demo Files (Original)</h3>
+                {Object.entries(legacyDemoFiles).map(([filename, content]) => {
+                  // Determine upload zone for legacy files
+                  const uploadZone = filename.includes('Hackathon')
+                    ? { name: 'RA Presentation', color: 'bg-blue-100 text-blue-800 border-blue-300' }
+                    : filename.includes('correspondence') || filename.includes('Vendor')
+                    ? { name: 'Correspondence', color: 'bg-purple-100 text-purple-800 border-purple-300' }
+                    : { name: 'Supporting Evidence', color: 'bg-green-100 text-green-800 border-green-300' };
+
+                  // Use legacy project name for prefix
+                  const legacyProjectPrefix = 'E-Government Payment Gateway';
+
+                  return (
+                    <div key={filename} className="border border-border rounded-lg p-4 mb-3">
+                      <div className="flex items-start justify-between mb-3 gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="w-5 h-5 text-primary" />
+                            <h4 className="font-medium">{filename}</h4>
+                          </div>
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border ${uploadZone.color} text-xs font-medium`}>
+                            <span>📤 Upload to:</span>
+                            <span className="font-bold">{uploadZone.name}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => downloadFile(filename, content, legacyProjectPrefix)}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 flex items-center gap-2 flex-shrink-0"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download
+                        </button>
+                      </div>
+                      <div className="bg-secondary p-3 rounded max-h-40 overflow-y-auto">
+                        <pre className="text-xs font-mono whitespace-pre-wrap">{content.substring(0, 500)}...</pre>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {content.length.toLocaleString()} characters
+                      </p>
+                    </div>
+                  );
+                })}
+
+              <div className="bg-gray-50 border border-gray-300 rounded p-4 mt-4">
+                <h4 className="font-medium mb-2">ℹ️ Legacy Files Note</h4>
+                <p className="text-sm text-muted-foreground mb-2">
+                  These are the original demo files. For better architecture analysis demonstrations,
+                  use the <strong>new architecture-specific file sets above</strong>.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Each legacy file is also color-coded to show which upload zone to use.
+                </p>
+              </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'architecture' && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded p-4">
+                <h3 className="font-medium mb-2">🏗️ System Architecture Analysis</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  The app automatically analyzes uploaded files to identify system architecture and generate threat models using MITRE ATT&CK and ATLAS frameworks.
+                </p>
+                <div className="bg-white border border-blue-300 rounded px-3 py-2 text-xs mt-2">
+                  <strong>💡 Quick Start:</strong> Go to "Demo Files" tab and click <strong>"Auto Run Demo"</strong> to see this in action instantly!
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">How Architecture Synthesis Works</h3>
+                  <p className="text-sm mb-3">When you upload files, the system analyzes them to automatically:</p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm">
+                    <li><strong>Identify Architecture Type:</strong> 3-tier, microservices, serverless, monolithic, SOA, event-driven</li>
+                    <li><strong>Extract Components:</strong> Frontend, backend, database, API gateway, caching layers, security infrastructure</li>
+                    <li><strong>Detect AI/ML Systems:</strong> Machine learning models, neural networks, training pipelines</li>
+                    <li><strong>Determine Deployment:</strong> Cloud vs internal network, containerized environments</li>
+                    <li><strong>Calculate Confidence:</strong> Score and explanation of why the architecture was identified</li>
+                  </ol>
+                </div>
+
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">Architecture Patterns Detected</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <h4 className="font-medium mb-2">Architecture Types:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                        <li>Microservices</li>
+                        <li>3-Tier Web Application</li>
+                        <li>Serverless / FaaS</li>
+                        <li>Monolithic</li>
+                        <li>Service-Oriented (SOA)</li>
+                        <li>Event-Driven</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Components Identified:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                        <li>Frontend / UI Layer</li>
+                        <li>Backend / API Services</li>
+                        <li>Database / Data Layer</li>
+                        <li>Caching (Redis, Memcache)</li>
+                        <li>Load Balancers</li>
+                        <li>Firewall / IPS / WAF</li>
+                        <li>Kubernetes / Containers</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">Keywords the System Looks For</h3>
+                  <p className="text-sm mb-3">To get accurate architecture identification, include these keywords in your documents:</p>
+                  <div className="space-y-3 text-sm">
+                    <div className="bg-secondary p-3 rounded">
+                      <h4 className="font-medium mb-1">For Architecture Type:</h4>
+                      <code className="text-xs">microservice, 3-tier, three tier, serverless, lambda, monolith, SOA, event-driven, kubernetes, container</code>
+                    </div>
+                    <div className="bg-secondary p-3 rounded">
+                      <h4 className="font-medium mb-1">For Components:</h4>
+                      <code className="text-xs">frontend, backend, database, API gateway, load balancer, firewall, IPS, WAF, cache, redis</code>
+                    </div>
+                    <div className="bg-secondary p-3 rounded">
+                      <h4 className="font-medium mb-1">For AI/ML Detection:</h4>
+                      <code className="text-xs">machine learning, ML model, neural network, AI, tensorflow, pytorch, inference, training</code>
+                    </div>
+                    <div className="bg-secondary p-3 rounded">
+                      <h4 className="font-medium mb-1">For Deployment:</h4>
+                      <code className="text-xs">cloud, AWS, Azure, GCP, internal network, on-premise, on-prem</code>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-border rounded-lg p-4">
+                  <h3 className="font-medium mb-3">Threat Modeling (MITRE ATT&CK & ATLAS)</h3>
+                  <p className="text-sm mb-3">Once architecture is identified, the system generates:</p>
+                  <ul className="list-disc list-inside space-y-2 text-sm">
+                    <li><strong>MITRE ATT&CK Tactics:</strong> Tailored to detected architecture (e.g., container-specific tactics for Kubernetes)</li>
+                    <li><strong>MITRE ATLAS Tactics:</strong> AI/ML-specific threats when AI systems are detected</li>
+                    <li><strong>Network Diagram:</strong> Visual attack surface map showing threat vectors and vulnerable components</li>
+                    <li><strong>Technique Mapping:</strong> Specific techniques (T-codes) relevant to your architecture</li>
+                  </ul>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded p-4">
+                  <h3 className="font-medium mb-2">💡 Best Practices for Accurate Analysis</h3>
+                  <ol className="list-decimal list-inside text-sm space-y-1">
+                    <li><strong>Use Pre-Made Demo Files:</strong> Download from "Demo Files" tab to see instant results</li>
+                    <li>Include architecture diagrams in presentations or evidence files</li>
+                    <li>Mention specific technologies and components in your documents</li>
+                    <li>Describe deployment environment (cloud provider, internal network, etc.)</li>
+                    <li>List layers: presentation, application, data, or service names</li>
+                    <li>Mention security infrastructure: firewalls, IPS, WAF, monitoring</li>
+                    <li>For AI systems: specify ML frameworks, model types, inference/training</li>
+                  </ol>
+                </div>
+
+                <div className="bg-purple-50 border border-purple-200 rounded p-4">
+                  <h3 className="font-medium mb-2">🎯 Try the Demo File Sets</h3>
+                  <p className="text-sm mb-3">
+                    Go to the <strong>"Demo Files"</strong> tab to download pre-made file sets that demonstrate:
+                  </p>
+                  <ul className="list-disc list-inside text-sm space-y-1.5">
+                    <li><strong>3-Tier:</strong> Classic web app with presentation/application/data layers</li>
+                    <li><strong>Microservices:</strong> Kubernetes + Kong API Gateway + service mesh</li>
+                    <li><strong>AI/ML:</strong> Triggers MITRE ATLAS framework with ML models and inference</li>
+                    <li><strong>Serverless:</strong> AWS Lambda + event-driven architecture</li>
+                  </ul>
+                  <p className="text-sm mt-3">
+                    Each set contains 4 files: RA presentation, vendor correspondence (patch timelines!), architecture docs, and security assessment - everything needed for realistic risk acceptance decisions!
+                  </p>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                  <h3 className="font-medium mb-2">⚠️ Important Notes</h3>
+                  <ul className="list-disc list-inside text-sm space-y-1">
+                    <li>Analysis updates automatically when files are uploaded or removed</li>
+                    <li>Both analysis boxes are collapsible - click headers to expand/collapse</li>
+                    <li>Confidence scores indicate analysis quality (higher is better)</li>
+                    <li>If architecture type is "Unknown", add more descriptive keywords to your files</li>
+                    <li>Network diagrams are auto-generated based on detected components</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-border px-6 py-4 bg-muted/30">
+          <p className="text-sm text-muted-foreground">
+            📖 Supabase Dashboard: <a href="https://supabase.com/dashboard/project/rcojgwrpyurkwbvlyxmi" target="_blank" className="text-blue-600 underline">Open here</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

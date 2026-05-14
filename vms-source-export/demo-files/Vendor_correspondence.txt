@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════════════════════
+EMAIL CORRESPONDENCE - VENDOR SECURITY ADVISORY
+═══════════════════════════════════════════════════════════════════════════
+
+From: security@goodluckinfra.gov.sg
+To: product-security@agency.gov.sg
+Date: April 8, 2026 14:32 SGT
+Subject: RE: CVE-2024-3457 - Security Advisory and Remediation Timeline
+
+───────────────────────────────────────────────────────────────────────────
+
+Dear Product Security Team,
+
+Thank you for reaching out regarding CVE-2024-3457 identified in the
+E-Government Payment Gateway system.
+
+VENDOR ASSESSMENT:
+We acknowledge the vulnerability and have conducted our own security
+assessment. Our findings align with the NVD classification of MEDIUM
+severity (CVSS 6.5).
+
+REMEDIATION OPTIONS:
+
+Option 1: Full Patch Deployment
+- Estimated effort: 6-8 weeks
+- Cost: $45,000
+- Risk: Moderate (requires system downtime during deployment)
+- Recommendation: NOT RECOMMENDED given decommission timeline
+
+Option 2: Risk Acceptance with Compensating Controls
+- Estimated effort: 1 week (documentation and monitoring setup)
+- Cost: $3,000
+- Risk: Low (with proper controls)
+- Recommendation: RECOMMENDED for current situation
+
+TECHNICAL ANALYSIS:
+The vulnerability requires the following preconditions for exploitation:
+1. Valid authenticated session
+2. Network access to internal API endpoint
+3. Knowledge of specific API structure
+4. Absence of network-level filtering
+
+COMPENSATING CONTROLS VALIDATION:
+We have reviewed your proposed compensating controls and confirm they
+adequately address the attack vectors:
+
+✓ Network segmentation prevents external access
+✓ Authentication requirements reduce attack surface
+✓ IPS/Firewall rules block known exploit patterns
+✓ SIEM monitoring provides early warning capability
+
+COMPLIANCE CONSIDERATIONS:
+This approach aligns with NIST 800-53 controls:
+- AC-4: Information Flow Enforcement
+- SI-3: Malicious Code Protection
+- SI-4: Information System Monitoring
+- SC-7: Boundary Protection
+
+VENDOR RECOMMENDATION:
+Given the 90-day window until system decommissioning and the comprehensive
+compensating controls in place, we recommend proceeding with risk acceptance
+rather than full remediation.
+
+We commit to:
+- Provide security monitoring support
+- Immediate notification of any threat intelligence updates
+- Emergency patch if exploitation is observed in the wild
+
+Please let us know if you need any additional technical documentation or
+clarification.
+
+Best regards,
+
+Dr. Sarah Chen
+Chief Security Officer
+Good Luck Infrastructure Services
+security@goodluckinfra.gov.sg
++65 6XXX XXXX
+
+───────────────────────────────────────────────────────────────────────────
+ATTACHMENT: Vendor Security Assessment Report (see separate document)
+───────────────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════════════
+
+From: product-security@agency.gov.sg
+To: security@goodluckinfra.gov.sg
+Date: April 9, 2026 09:15 SGT
+Subject: RE: CVE-2024-3457 - Security Advisory and Remediation Timeline
+
+───────────────────────────────────────────────────────────────────────────
+
+Dr. Chen,
+
+Thank you for the comprehensive assessment. We concur with your
+recommendation to proceed with risk acceptance.
+
+We will prepare the formal risk acceptance documentation with the
+compensating controls outlined in your message.
+
+Expected submission for approval: April 10, 2026
+
+Regards,
+Officer 1
+Product Security Team
+
+═══════════════════════════════════════════════════════════════════════════
+END OF CORRESPONDENCE
+═══════════════════════════════════════════════════════════════════════════
